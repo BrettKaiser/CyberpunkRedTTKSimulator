@@ -1,6 +1,12 @@
 package main
 
 var WeaponsList = []Weapon{
+	BrawlingStrike7Body,
+	BrawlingStrike11Body,
+	BrawlingChoke7Body,
+	BrawlingChoke10Body,
+	BrawlingChoke12Body,
+	BrawlingChoke14Body,
 	HeavyPistol,
 	VeryHeavyPistol,
 	ExoticHeavyPistol,
@@ -13,18 +19,13 @@ var WeaponsList = []Weapon{
 	SMG,
 	HeavySMG,
 	Shotgun,
-	BrawlingStrike,
-	BrawlingChoke7Body,
-	BrawlingChoke10Body,
-	BrawlingChoke12Body,
-	BrawlingChoke14Body,
 }
 
 type Weapon struct {
 	Name                 string            `json:"name"`
 	DamageDice           int               `json:"damage_dice"`
 	ClipSize             int               `json:"clip_size"`
-	RangeBandDVs         map[RangeBand]int `json:"range_band_d_vs"`
+	RangeBandDVs         map[RangeBand]int `json:"range_band_dv_s"`
 	AutofireRangeBandDVs map[RangeBand]int `json:"autofire_range_band_dv_s"`
 	RequiredHands        int               `json:"required_hands"`
 	RateOfFire           int               `json:"rate_of_fire"`
@@ -80,8 +81,22 @@ var Body7MartialArt = Weapon{
 	HalvesArmor:   true,
 }
 
-var BrawlingStrike = Weapon{
-	Name:          "Brawling Strike",
+var BrawlingStrike7Body = Weapon{
+	Name:          "Brawling Strike 11 Body",
+	DamageDice:    3,
+	RangeBandDVs:  nil,
+	RequiredHands: 1,
+	RateOfFire:    2,
+	Skill:         Brawling,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  true,
+	AutofireDice:  0,
+	HalvesArmor:   false,
+}
+
+var BrawlingStrike11Body = Weapon{
+	Name:          "Brawling Strike 11 Body",
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
@@ -99,7 +114,7 @@ var BrawlingChoke7Body = Weapon{
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
-	RateOfFire:    2,
+	RateOfFire:    1,
 	Skill:         Brawling,
 	Ranged:        false,
 	CanAutofire:   false,
@@ -115,7 +130,7 @@ var BrawlingChoke10Body = Weapon{
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
-	RateOfFire:    2,
+	RateOfFire:    1,
 	Skill:         Brawling,
 	Ranged:        false,
 	CanAutofire:   false,
@@ -131,7 +146,7 @@ var BrawlingChoke12Body = Weapon{
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
-	RateOfFire:    2,
+	RateOfFire:    1,
 	Skill:         Brawling,
 	Ranged:        false,
 	CanAutofire:   false,
@@ -147,7 +162,7 @@ var BrawlingChoke14Body = Weapon{
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
-	RateOfFire:    2,
+	RateOfFire:    1,
 	Skill:         Brawling,
 	Ranged:        false,
 	CanAutofire:   false,

@@ -21,18 +21,20 @@ type AttacksParams struct {
 }
 
 type CombatScenario struct {
-	DebugLogs       bool
-	Ammunition      AmmunitionType
-	AttackType      AttackType
-	Attacker        CurrentCharacter
-	Defender        CurrentCharacter
-	RangeBand       RangeBand
-	TotalAttacks    int
-	DamageDone      int
-	NumberOfRounds  int
-	NotApplicable   bool
-	NumberOfReloads int
-	InGrapple       bool
+	DebugLogs                 bool
+	Ammunition                AmmunitionType
+	AttackType                AttackType
+	Attacker                  CurrentCharacter
+	Defender                  CurrentCharacter
+	RangeBand                 RangeBand
+	TotalAttacks              int
+	DamageDone                int
+	NumberOfRounds            int
+	NotApplicable             bool
+	NumberOfReloads           int
+	RoundsSpentRunning        int
+	InGrapple                 bool
+	DistanceBetweenCharacters int
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
@@ -57,12 +59,30 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 				CurrentClipSize: params.Defender.Weapon.ClipSize,
 			},
 		},
-		InGrapple:       false,
-		RangeBand:       VeryClose,
+		InGrapple:                 false,
+		RangeBand:                 params.RangeBand,
+		DistanceBetweenCharacters: params.RangeBand.MaxDistance,
+
 		TotalAttacks:    0,
 		DamageDone:      0,
 		NumberOfRounds:  0,
 		NumberOfReloads: 0,
+	}
+}
+
+func (scenario *CombatScenario) inMeleeRange() bool {
+	if scenario.DistanceBetweenCharacters > VeryClose.MaxDistance {
+		return false
+	}
+
+	return true
+}
+
+func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
+	scenario.DistanceBetweenCharacters -= character.Movement
+
+	if scenario.DistanceBetweenCharacters < 0 {
+		scenario.DistanceBetweenCharacters = 0
 	}
 }
 
@@ -73,6 +93,18 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 		}
 
 		scenario.NumberOfRounds++
+
+		// Move into melee range
+		if !scenario.Attacker.CurrentWeapon.Weapon.Ranged && !scenario.inMeleeRange() {
+			scenario.moveCharacterCloser(scenario.Attacker)
+			if !scenario.inMeleeRange() {
+				scenario.moveCharacterCloser(scenario.Attacker)
+				scenario.RoundsSpentRunning++
+				continue
+			}
+		}
+
+		// Attempt to grapple if not grappled
 		if !scenario.InGrapple && scenario.Attacker.Weapon.ShouldChoke {
 			if scenario.grappledSuccessfully() {
 				scenario.InGrapple = true
@@ -80,6 +112,7 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 			}
 		}
 
+		// Attack
 		attacksResult := scenario.CalculateAttacks()
 
 		if scenario.DebugLogs {

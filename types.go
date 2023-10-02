@@ -23,6 +23,7 @@ type CharacterStats struct {
 	MaxHP           int        `json:"hp"`
 	Reflexes        int        `json:"reflexes"`
 	Dexterity       int        `json:"dexterity"`
+	Movement        int        `json:"movement"`
 	Evasion         int        `json:"evasion"`
 	Brawling        int        `json:"brawling"`
 	Handguns        int        `json:"handguns"`

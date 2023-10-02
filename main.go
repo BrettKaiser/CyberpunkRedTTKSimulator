@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 50000
+const ITERATIONS = 1
 
 const MaximumRounds = 100
 
@@ -47,6 +47,7 @@ func main() {
 func Run(params SimulationParams) {
 	completedRuns := []WeaponRunResult{}
 	var weaponGroup sync.WaitGroup
+	rangeBand := VeryFar
 
 	for _, weapon := range WeaponsList {
 		weaponGroup.Add(1)
@@ -73,7 +74,7 @@ func Run(params SimulationParams) {
 							ArmorPenalty:   0,
 						},
 						Defender:   CyberPsycho,
-						RangeBand:  VeryClose,
+						RangeBand:  rangeBand,
 						DebugLogs:  params.DebugLogs,
 						Iterations: params.Iterations,
 					}
@@ -110,11 +111,12 @@ type WeaponRunResult struct {
 }
 
 type RunResult struct {
-	AverageAttacksToKill   string
-	AverageRoundsToKill    string
-	AverageNumberOfReloads string
-	AttackType             string
-	WeaponName             string
+	AverageAttacksToKill      string
+	AverageRoundsToKill       string
+	AverageNumberOfReloads    string
+	AverageRoundsSpentRunning string
+	AttackType                string
+	WeaponName                string
 }
 
 func runScenario(scenarioParams ScenarioParams) RunResult {
@@ -141,10 +143,6 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 		}
 	}
 
-	if !scenarioParams.Attacker.Weapon.Ranged && scenarioParams.RangeBand != VeryClose {
-		return runResult
-	}
-
 	for i := 0; i < scenarioParams.Iterations; i++ {
 		if scenarioParams.DebugLogs {
 			fmt.Printf("\n***************\nBegin Scenario %d\n\n", i+1)
@@ -164,6 +162,7 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 	runResult.AverageRoundsToKill = fmt.Sprintf("%.3f", averageRoundsToKill)
 	runResult.AverageAttacksToKill = fmt.Sprintf("%.3f", averageAttacksToKill)
 	runResult.AverageNumberOfReloads = fmt.Sprintf("%.2f", getAverageReloads(scenariosRun))
+	runResult.AverageRoundsSpentRunning = fmt.Sprintf("%.2f", getAverageRunningInstances(scenariosRun))
 
 	return runResult
 }
@@ -197,7 +196,7 @@ func getRows(weaponRunResults []WeaponRunResult) []table.Row {
 		newRow := table.Row{weaponResult.WeaponName}
 		for _, result := range weaponResult.RunResults {
 			// newStringValue := fmt.Sprintf("%s/%s", result.AverageAttacksToKill, result.AverageRoundsToKill)
-			newStringValue := fmt.Sprintf("%s/R%s", result.AverageRoundsToKill, result.AverageNumberOfReloads)
+			newStringValue := fmt.Sprintf("%s/R%s/M%s", result.AverageRoundsToKill, result.AverageNumberOfReloads, result.AverageRoundsSpentRunning)
 			newRow = append(newRow, newStringValue)
 		}
 
@@ -238,6 +237,18 @@ func getAverageReloads(scenarios []CombatScenario) float64 {
 	for i, _ := range scenarios {
 		numberOfScenarios++
 		total += scenarios[i].NumberOfReloads
+	}
+
+	return float64(total) / float64(numberOfScenarios)
+}
+
+func getAverageRunningInstances(scenarios []CombatScenario) float64 {
+	total := 0
+	numberOfScenarios := 0
+
+	for i, _ := range scenarios {
+		numberOfScenarios++
+		total += scenarios[i].RoundsSpentRunning
 	}
 
 	return float64(total) / float64(numberOfScenarios)

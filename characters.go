@@ -22,6 +22,7 @@ var PlayerCharacter = CharacterStats{
 	MaxHP:        40,
 	Reflexes:     8,
 	Dexterity:    8,
+	Movement:     8,
 	Evasion:      PCStatsAt,
 	Brawling:     PCStatsAt,
 	Handguns:     PCStatsAt,
