@@ -12,7 +12,7 @@ import (
 
 const ITERATIONS = 50000
 
-const MaximumRounds = 300
+const MaximumRounds = 100
 
 type SimulationParams struct {
 	Iterations int
@@ -46,7 +46,6 @@ func main() {
 
 func Run(params SimulationParams) {
 	completedRuns := []WeaponRunResult{}
-	// weaponRunResultChan := make(chan WeaponRunResult, len(WeaponsList))
 	var weaponGroup sync.WaitGroup
 
 	for _, weapon := range WeaponsList {

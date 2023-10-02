@@ -1,6 +1,6 @@
 package main
 
-var PCStatsAt = 10
+var PCStatsAt = 6
 
 var MaxCombatAwarenessPrecision = Modifier{
 	Name:  "CombatAwarenessPrecision",
@@ -64,7 +64,7 @@ var CyberPsychoStats = CharacterStats{
 var CyberPsycho = Character{
 	CharacterStats: CyberPsychoStats,
 	Weapon:         HeavyPistol,
-	ArmorValue:     11,
+	ArmorValue:     12,
 	ArmorPenalty:   0,
 	ShouldDodge:    true,
 }

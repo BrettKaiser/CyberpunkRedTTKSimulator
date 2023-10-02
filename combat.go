@@ -32,6 +32,7 @@ type CombatScenario struct {
 	NumberOfRounds  int
 	NotApplicable   bool
 	NumberOfReloads int
+	InGrapple       bool
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
@@ -56,6 +57,7 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 				CurrentClipSize: params.Defender.Weapon.ClipSize,
 			},
 		},
+		InGrapple:       false,
 		RangeBand:       VeryClose,
 		TotalAttacks:    0,
 		DamageDone:      0,
@@ -70,8 +72,15 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 			break
 		}
 
-		attacksResult := scenario.CalculateAttacks()
 		scenario.NumberOfRounds++
+		if !scenario.InGrapple && scenario.Attacker.Weapon.ShouldChoke {
+			if scenario.grappledSuccessfully() {
+				scenario.InGrapple = true
+				continue
+			}
+		}
+
+		attacksResult := scenario.CalculateAttacks()
 
 		if scenario.DebugLogs {
 			DisplayRound(attacksResult, i+1)
@@ -80,6 +89,17 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 	}
 
 	return *scenario
+}
+
+func (scenario *CombatScenario) grappledSuccessfully() bool {
+	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, 0)
+	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, 0)
+
+	if attackerRoll > defenderRoll {
+		return true
+	}
+
+	return false
 }
 
 func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
@@ -99,7 +119,7 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 	attacksDoneThisRound := 0
 
 	numberOfAttacks := weapon.RateOfFire
-	if scenario.AttackType == Autofire || scenario.AttackType == Headshot {
+	if scenario.AttackType == Autofire || scenario.AttackType == Headshot || scenario.Attacker.CurrentWeapon.ShouldChoke {
 		numberOfAttacks = 1
 	}
 
@@ -115,6 +135,12 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 
 		attacksDoneThisRound++
 		scenario.Attacker.CurrentWeapon.subtractAmmo(scenario.AttackType)
+
+		if scenario.Attacker.CurrentWeapon.ShouldChoke && scenario.InGrapple {
+			scenario.Defender.CurrentHP -= scenario.Attacker.CurrentWeapon.ChokeDamage
+			damageDoneThisRound += scenario.Attacker.CurrentWeapon.ChokeDamage
+			continue
+		}
 
 		dv := scenario.GetDV()
 

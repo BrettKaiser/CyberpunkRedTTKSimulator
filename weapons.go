@@ -13,7 +13,11 @@ var WeaponsList = []Weapon{
 	SMG,
 	HeavySMG,
 	Shotgun,
-	BrawlingWeapon,
+	BrawlingStrike,
+	BrawlingChoke7Body,
+	BrawlingChoke10Body,
+	BrawlingChoke12Body,
+	BrawlingChoke14Body,
 }
 
 type Weapon struct {
@@ -30,6 +34,8 @@ type Weapon struct {
 	CanAutofire          bool              `json:"can_autofire"`
 	CanAimedShot         bool              `json:"can_aimed_shot"`
 	HalvesArmor          bool
+	ShouldChoke          bool
+	ChokeDamage          int
 }
 
 var HeavyMelee = Weapon{
@@ -74,8 +80,8 @@ var Body7MartialArt = Weapon{
 	HalvesArmor:   true,
 }
 
-var BrawlingWeapon = Weapon{
-	Name:          "Brawling",
+var BrawlingStrike = Weapon{
+	Name:          "Brawling Strike",
 	DamageDice:    4,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
@@ -86,6 +92,70 @@ var BrawlingWeapon = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   false,
+}
+
+var BrawlingChoke7Body = Weapon{
+	Name:          "Brawling Choke 7 Body",
+	DamageDice:    4,
+	RangeBandDVs:  nil,
+	RequiredHands: 1,
+	RateOfFire:    2,
+	Skill:         Brawling,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  false,
+	AutofireDice:  0,
+	HalvesArmor:   false,
+	ShouldChoke:   true,
+	ChokeDamage:   7,
+}
+
+var BrawlingChoke10Body = Weapon{
+	Name:          "Brawling Choke 10 Body",
+	DamageDice:    4,
+	RangeBandDVs:  nil,
+	RequiredHands: 1,
+	RateOfFire:    2,
+	Skill:         Brawling,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  false,
+	AutofireDice:  0,
+	HalvesArmor:   false,
+	ShouldChoke:   true,
+	ChokeDamage:   10,
+}
+
+var BrawlingChoke12Body = Weapon{
+	Name:          "Brawling Choke 12 Body",
+	DamageDice:    4,
+	RangeBandDVs:  nil,
+	RequiredHands: 1,
+	RateOfFire:    2,
+	Skill:         Brawling,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  false,
+	AutofireDice:  0,
+	HalvesArmor:   false,
+	ShouldChoke:   true,
+	ChokeDamage:   12,
+}
+
+var BrawlingChoke14Body = Weapon{
+	Name:          "Brawling Choke 14 Body",
+	DamageDice:    4,
+	RangeBandDVs:  nil,
+	RequiredHands: 1,
+	RateOfFire:    2,
+	Skill:         Brawling,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  false,
+	AutofireDice:  0,
+	HalvesArmor:   false,
+	ShouldChoke:   true,
+	ChokeDamage:   14,
 }
 
 var HeavyPistol = Weapon{
