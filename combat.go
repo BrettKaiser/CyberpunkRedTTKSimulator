@@ -34,6 +34,7 @@ type CombatScenario struct {
 	NumberOfReloads           int
 	RoundsSpentRunning        int
 	InGrapple                 bool
+	ConsecutiveChokeRounds    int
 	DistanceBetweenCharacters int
 }
 
@@ -60,6 +61,7 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 			},
 		},
 		InGrapple:                 false,
+		ConsecutiveChokeRounds:    0,
 		RangeBand:                 params.RangeBand,
 		DistanceBetweenCharacters: params.RangeBand.MaxDistance,
 
@@ -98,7 +100,7 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 
 		// Attempt to grapple if not grappled
 		if !scenario.InGrapple && scenario.Attacker.Weapon.ShouldChoke {
-			if scenario.grappledSuccessfully() {
+			if scenario.doesAttackerWinGrappleCheck() {
 				scenario.InGrapple = true
 				continue
 			}
@@ -153,6 +155,12 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 		if scenario.Attacker.CurrentWeapon.ShouldChoke && scenario.InGrapple {
 			scenario.Defender.CurrentHP -= scenario.Attacker.CurrentWeapon.ChokeDamage
 			damageDoneThisRound += scenario.Attacker.CurrentWeapon.ChokeDamage
+			scenario.ConsecutiveChokeRounds++
+
+			if scenario.ConsecutiveChokeRounds >= 3 {
+				scenario.Defender.CurrentHP = 0
+			}
+
 			continue
 		}
 
@@ -180,6 +188,14 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 
 	scenario.TotalAttacks += attacksDoneThisRound
 
+	// Simulate enemy escaping from their grapple on their turn
+	if scenario.InGrapple {
+		if !scenario.doesAttackerWinGrappleCheck() {
+			scenario.InGrapple = false
+			scenario.ConsecutiveChokeRounds = 0
+		}
+	}
+
 	return AttacksResult{
 		TotalDamage:      damageDoneThisRound,
 		ArmorAblated:     armorAblatedThisRound,
@@ -197,7 +213,7 @@ func (weapon *CurrentWeapon) reload() {
 	weapon.CurrentClipSize = weapon.ClipSize
 }
 
-func (scenario *CombatScenario) grappledSuccessfully() bool {
+func (scenario *CombatScenario) doesAttackerWinGrappleCheck() bool {
 	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, 0)
 	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, 0)
 
