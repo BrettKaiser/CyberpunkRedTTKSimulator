@@ -1,6 +1,6 @@
 package main
 
-var PCStatsAt = 10
+var PCSkillsAt = 6
 
 var CyberPsycho = Character{
 	CharacterStats: CyberPsychoStats,
@@ -24,14 +24,14 @@ var PlayerCharacter = CharacterStats{
 	Reflexes:        8,
 	Dexterity:       8,
 	Movement:        8,
-	Evasion:         PCStatsAt,
-	Brawling:        PCStatsAt,
-	Handguns:        PCStatsAt,
-	ShoulderArms:    PCStatsAt,
-	HeavyWeapons:    PCStatsAt,
-	AutoFire:        PCStatsAt,
-	Melee:           PCStatsAt,
-	MartialArts:     PCStatsAt,
+	Evasion:         PCSkillsAt,
+	Brawling:        PCSkillsAt,
+	Handguns:        PCSkillsAt,
+	ShoulderArms:    PCSkillsAt,
+	HeavyWeapons:    PCSkillsAt,
+	AutoFire:        PCSkillsAt,
+	Melee:           PCSkillsAt,
+	MartialArts:     PCSkillsAt,
 	AttackModifiers: []Modifier{},
 }
 
