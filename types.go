@@ -1,13 +1,13 @@
 package main
 
 type AttackParams struct {
-	Attribute      int    `json:"attribute"`
-	Skill          int    `json:"skill"`
-	Modifiers      []int  `json:"modifiers"`
-	DV             int    `json:"dv"`
-	DamageDice     int    `json:"damage_dice"`
-	ClipSize       int    `json:"clip_size"`
-	AmmunitionType string `json:"ammunition_type"`
+	Attribute      int            `json:"attribute"`
+	Skill          int            `json:"skill"`
+	Modifiers      []int          `json:"modifiers"`
+	DV             int            `json:"dv"`
+	DamageDice     int            `json:"damage_dice"`
+	ClipSize       int            `json:"clip_size"`
+	AmmunitionType AmmunitionType `json:"ammunition_type"`
 }
 
 type Character struct {
@@ -21,6 +21,8 @@ type Character struct {
 	AimedShotBonus  int  `json:"aimed_shot_bonus"`
 	ExtendedClip    bool `json:"extended_clip"`
 	DrumClip        bool `json:"drum_clip"`
+	ExcellentWeapon bool `json:"excellent_weapon"`
+	IsTech          bool
 }
 
 type CharacterStats struct {
@@ -43,6 +45,7 @@ type CharacterStats struct {
 type CurrentCharacter struct {
 	Character
 	CurrentHP     int           `json:"current_hp"`
+	CurrentSP     int           `json:"current_sp"`
 	Modifiers     []Modifier    `json:"modifiers"`
 	CurrentWeapon CurrentWeapon `json:"current_weapon"`
 }

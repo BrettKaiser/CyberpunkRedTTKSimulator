@@ -31,6 +31,36 @@ var WeaponsList = []Weapon{
 	Shotgun,
 }
 
+var AmmunitionTypes = map[string]Ammunition{
+	"basic":          BasicAmmunition,
+	"armor_piercing": ArmorPiercingAmmunition,
+}
+
+type Ammunition struct {
+	Name string
+	Cost int `json:"cost"`
+}
+
+var BasicAmmunition = Ammunition{
+	Name: "Basic",
+	Cost: 10,
+}
+
+var ArmorPiercingAmmunition = Ammunition{
+	Name: "Armor Piercing",
+	Cost: 100,
+}
+
+type AmmunitionType string
+
+const (
+	Basic         AmmunitionType = "basic"
+	ArmorPiercing AmmunitionType = "armor_piercing"
+	Incendiary    AmmunitionType = "incendiary"
+)
+
+type WeaponType string
+
 type Weapon struct {
 	Name                 string            `json:"name"`
 	DamageDice           int               `json:"damage_dice"`
@@ -49,6 +79,9 @@ type Weapon struct {
 	HalvesArmor          bool
 	ShouldChoke          bool
 	ChokeDamage          int
+	Unarmed              bool
+	Cost                 int
+	Explosive            bool
 }
 
 var HeavyMelee = Weapon{
@@ -63,6 +96,7 @@ var HeavyMelee = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   true,
+	Cost:          100,
 }
 
 var VeryHeavyMelee = Weapon{
@@ -77,6 +111,7 @@ var VeryHeavyMelee = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   true,
+	Cost:          500,
 }
 
 var Body11MartialArt = Weapon{
@@ -91,6 +126,8 @@ var Body11MartialArt = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   true,
+	Unarmed:       true,
+	Cost:          2000,
 }
 
 var Body7MartialArt = Weapon{
@@ -105,6 +142,8 @@ var Body7MartialArt = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   true,
+	Unarmed:       true,
+	Cost:          0,
 }
 
 var BrawlingStrike7Body = Weapon{
@@ -119,6 +158,8 @@ var BrawlingStrike7Body = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   false,
+	Unarmed:       true,
+	Cost:          0,
 }
 
 var BrawlingStrike11Body = Weapon{
@@ -133,6 +174,8 @@ var BrawlingStrike11Body = Weapon{
 	CanAimedShot:  true,
 	AutofireDice:  0,
 	HalvesArmor:   false,
+	Unarmed:       true,
+	Cost:          2000,
 }
 
 var BrawlingChoke7Body = Weapon{
@@ -149,6 +192,8 @@ var BrawlingChoke7Body = Weapon{
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   7,
+	Unarmed:       true,
+	Cost:          0,
 }
 
 var BrawlingChoke10Body = Weapon{
@@ -165,6 +210,8 @@ var BrawlingChoke10Body = Weapon{
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   10,
+	Unarmed:       true,
+	Cost:          1000,
 }
 
 var BrawlingChoke12Body = Weapon{
@@ -181,6 +228,8 @@ var BrawlingChoke12Body = Weapon{
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   12,
+	Unarmed:       true,
+	Cost:          2000,
 }
 
 var BrawlingChoke14Body = Weapon{
@@ -197,6 +246,8 @@ var BrawlingChoke14Body = Weapon{
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   14,
+	Unarmed:       true,
+	Cost:          7000,
 }
 
 var MediumPistol = Weapon{
@@ -214,6 +265,7 @@ var MediumPistol = Weapon{
 	ClipSize:         12,
 	ExtendedClipSize: 18,
 	DrumClipSize:     36,
+	Cost:             50,
 }
 
 var HeavyPistol = Weapon{
@@ -231,6 +283,7 @@ var HeavyPistol = Weapon{
 	ClipSize:         8,
 	ExtendedClipSize: 14,
 	DrumClipSize:     28,
+	Cost:             100,
 }
 
 var VeryHeavyPistol = Weapon{
@@ -248,6 +301,7 @@ var VeryHeavyPistol = Weapon{
 	ClipSize:         8,
 	ExtendedClipSize: 14,
 	DrumClipSize:     28,
+	Cost:             100,
 }
 
 var ExoticHeavyPistol = Weapon{
@@ -265,6 +319,7 @@ var ExoticHeavyPistol = Weapon{
 	ClipSize:         8,
 	ExtendedClipSize: 8,
 	DrumClipSize:     8,
+	Cost:             10000,
 }
 
 var GrenadeLauncher = Weapon{
@@ -282,6 +337,8 @@ var GrenadeLauncher = Weapon{
 	ClipSize:         2,
 	ExtendedClipSize: 4,
 	DrumClipSize:     6,
+	Cost:             500,
+	Explosive:        true,
 }
 
 var RocketLauncher = Weapon{
@@ -299,6 +356,8 @@ var RocketLauncher = Weapon{
 	ClipSize:         1,
 	ExtendedClipSize: 2,
 	DrumClipSize:     3,
+	Cost:             500,
+	Explosive:        true,
 }
 
 var AssaultRifle = Weapon{
@@ -317,6 +376,7 @@ var AssaultRifle = Weapon{
 	ClipSize:             25,
 	ExtendedClipSize:     35,
 	DrumClipSize:         45,
+	Cost:                 500,
 }
 
 var SniperRifle = Weapon{
@@ -335,6 +395,7 @@ var SniperRifle = Weapon{
 	ClipSize:             4,
 	ExtendedClipSize:     8,
 	DrumClipSize:         12,
+	Cost:                 500,
 }
 
 var SMG = Weapon{
@@ -353,6 +414,7 @@ var SMG = Weapon{
 	ClipSize:             30,
 	ExtendedClipSize:     40,
 	DrumClipSize:         50,
+	Cost:                 100,
 }
 
 var HeavySMG = Weapon{
@@ -371,6 +433,7 @@ var HeavySMG = Weapon{
 	ClipSize:             40,
 	ExtendedClipSize:     50,
 	DrumClipSize:         60,
+	Cost:                 100,
 }
 
 var Shotgun = Weapon{
@@ -388,6 +451,7 @@ var Shotgun = Weapon{
 	ClipSize:         4,
 	ExtendedClipSize: 8,
 	DrumClipSize:     16,
+	Cost:             500,
 }
 
 var PistolRangeBands = map[RangeBand]int{

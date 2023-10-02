@@ -22,7 +22,7 @@ type AttacksParams struct {
 
 type CombatScenario struct {
 	DebugLogs                 bool
-	Ammunition                AmmunitionType
+	AmmunitionType            AmmunitionType
 	AttackType                AttackType
 	Attacker                  CurrentCharacter
 	Defender                  CurrentCharacter
@@ -36,6 +36,9 @@ type CombatScenario struct {
 	InGrapple                 bool
 	ConsecutiveChokeRounds    int
 	DistanceBetweenCharacters int
+	ScenarioCost              int
+	SetupCost                 int
+	JuryRigsRemaining         int
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
@@ -43,9 +46,9 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 	rand.Seed(time.Now().UnixNano())
 
 	return CombatScenario{
-		DebugLogs:  params.DebugLogs,
-		Ammunition: params.Ammunition,
-		AttackType: params.AttackType,
+		DebugLogs:      params.DebugLogs,
+		AmmunitionType: params.Ammunition,
+		AttackType:     params.AttackType,
 		Attacker: CurrentCharacter{
 			Character: params.Attacker,
 			CurrentHP: params.Attacker.MaxHP,
@@ -53,6 +56,7 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 				Weapon:          params.Attacker.Weapon,
 				CurrentClipSize: getClipSize(params.Attacker),
 			},
+			CurrentSP: params.Attacker.ArmorValue,
 		},
 		Defender: CurrentCharacter{
 			Character: params.Defender,
@@ -61,16 +65,18 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 				Weapon:          params.Defender.Weapon,
 				CurrentClipSize: getClipSize(params.Defender),
 			},
+			CurrentSP: params.Defender.ArmorValue,
 		},
 		InGrapple:                 false,
 		ConsecutiveChokeRounds:    0,
 		RangeBand:                 params.RangeBand,
 		DistanceBetweenCharacters: params.RangeBand.MaxDistance,
 
-		TotalAttacks:    0,
-		DamageDone:      0,
-		NumberOfRounds:  0,
-		NumberOfReloads: 0,
+		TotalAttacks:      0,
+		DamageDone:        0,
+		NumberOfRounds:    0,
+		NumberOfReloads:   0,
+		JuryRigsRemaining: 1,
 	}
 }
 
@@ -122,6 +128,15 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 			}
 		}
 
+		if scenario.Defender.IsTech && scenario.JuryRigsRemaining > 0 {
+			halfArmor := int(math.Ceil(float64(scenario.Defender.ArmorValue) / 2))
+			if scenario.Defender.CurrentSP < halfArmor+2 {
+				// Jury Rig your armor
+				scenario.Defender.CurrentSP = scenario.Defender.ArmorValue
+				scenario.JuryRigsRemaining -= 1
+			}
+		}
+
 		// Attack
 		attacksResult := scenario.CalculateAttacks()
 
@@ -130,6 +145,8 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 			scenario.DisplayResult()
 		}
 	}
+
+	scenario.setCost()
 
 	return *scenario
 }
@@ -161,12 +178,11 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 		}
 
 		if scenario.Attacker.mustReload(scenario.AttackType) {
-			scenario.Reload(scenario.Attacker.CurrentWeapon)
+			scenario.Reload()
 			break
 		}
 
 		attacksDoneThisRound++
-		scenario.Attacker.CurrentWeapon.subtractAmmo(scenario.AttackType)
 
 		if scenario.Attacker.CurrentWeapon.ShouldChoke && scenario.InGrapple {
 			scenario.Defender.CurrentHP -= scenario.Attacker.CurrentWeapon.ChokeDamage
@@ -179,6 +195,8 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 
 			continue
 		}
+
+		scenario.SubtractAmmo()
 
 		dv := scenario.GetDV()
 
@@ -193,8 +211,9 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 		damageResult := scenario.CalculateDamage(DamageParams{
 			ToHitResult:    toHitResult,
 			AttackType:     scenario.AttackType,
-			AmmunitionType: scenario.Ammunition,
+			AmmunitionType: scenario.AmmunitionType,
 			HalvesArmor:    scenario.Attacker.Weapon.HalvesArmor,
+			UsesAmmunition: scenario.Attacker.Weapon.Ranged,
 		})
 
 		damageDoneThisRound += damageResult.TotalDamage
@@ -220,7 +239,54 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 	}
 }
 
-func (scenario *CombatScenario) Reload(currentWeapon CurrentWeapon) {
+func (scenario *CombatScenario) setCost() {
+	scenarioCost := 0
+
+	setupCost := scenario.Attacker.CurrentWeapon.Cost
+
+	if scenario.Attacker.CurrentWeapon.Ranged {
+		ammunitionCost := AmmunitionTypes[string(scenario.AmmunitionType)].Cost
+
+		if scenario.Attacker.CurrentWeapon.Explosive {
+			scenarioCost = scenarioCost + (ammunitionCost * scenario.TotalAttacks)
+		} else {
+			TensOfAmmo := int(math.Ceil(float64(scenario.TotalAttacks) / 10))
+			scenarioCost = scenarioCost + (TensOfAmmo * ammunitionCost)
+		}
+
+		if scenario.Attacker.HasSmartLink {
+			setupCost += 1100
+		}
+
+		if scenario.Attacker.DrumClip {
+			setupCost += 500
+		}
+
+		if scenario.Attacker.ExtendedClip {
+			setupCost += 100
+		}
+	}
+
+	if !scenario.Attacker.CurrentWeapon.Unarmed {
+		if scenario.Attacker.ExcellentWeapon {
+			switch scenario.Attacker.Weapon.Cost {
+			case 100:
+				setupCost += 400
+			case 500:
+				setupCost += 500
+			}
+		}
+	}
+
+	scenario.SetupCost = setupCost
+	scenario.ScenarioCost = scenarioCost
+}
+
+func (scenario *CombatScenario) SubtractAmmo() {
+	scenario.Attacker.CurrentWeapon.subtractAmmo(scenario.AttackType)
+}
+
+func (scenario *CombatScenario) Reload() {
 	scenario.NumberOfReloads++
 	scenario.Attacker.CurrentWeapon.reload(scenario.Attacker.Character)
 }
@@ -230,14 +296,20 @@ func (weapon *CurrentWeapon) reload(character Character) {
 }
 
 func (scenario *CombatScenario) doesAttackerWinGrappleCheck() bool {
-	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, 0)
-	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, 0)
+	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, scenario.getGrappleModifiers(scenario.Attacker))
+	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, scenario.getGrappleModifiers(scenario.Defender))
 
 	if attackerRoll > defenderRoll {
 		return true
 	}
 
 	return false
+}
+
+func (scenario *CombatScenario) getGrappleModifiers(character CurrentCharacter) int {
+	modifiers := character.ArmorPenalty
+	modifiers += character.GetWoundPenalty()
+	return modifiers
 }
 
 func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
@@ -248,19 +320,24 @@ func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) 
 	}
 }
 
-func (weapon *CurrentWeapon) subtractAmmo(attackType AttackType) {
+func (weapon *CurrentWeapon) subtractAmmo(attackType AttackType) int {
 	if !weapon.Ranged {
-		return
+		return 0
 	}
+
+	amountToSubtract := 0
 
 	switch attackType {
 	case Autofire:
-		weapon.CurrentClipSize -= 10
+		amountToSubtract -= 10
 	case SingleShot:
-		weapon.CurrentClipSize -= 1
+		amountToSubtract -= 1
 	case Headshot:
-		weapon.CurrentClipSize -= 1
+		amountToSubtract -= 1
 	}
+
+	weapon.CurrentClipSize += amountToSubtract
+	return amountToSubtract * -1
 }
 
 func (character *CurrentCharacter) mustReload(attackType AttackType) bool {
@@ -329,7 +406,7 @@ func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResul
 		damageResult.TotalDamage += 5
 	}
 
-	armorValue := scenario.Defender.ArmorValue
+	armorValue := scenario.Defender.CurrentSP
 	if armorValue > 0 && params.HalvesArmor {
 		armorValue = int(math.Ceil(float64(armorValue) / 2))
 	}
@@ -346,10 +423,10 @@ func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResul
 
 		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - damageDone
 
-		if scenario.Defender.ArmorValue >= armorAblated {
-			scenario.Defender.ArmorValue = scenario.Defender.ArmorValue - armorAblated
+		if scenario.Defender.CurrentSP >= armorAblated {
+			scenario.Defender.CurrentSP = scenario.Defender.CurrentSP - armorAblated
 		} else {
-			scenario.Defender.ArmorValue = 0
+			scenario.Defender.CurrentSP = 0
 		}
 	}
 
@@ -373,7 +450,7 @@ func GetDamageDone(params DamageParams, damageDifference int) int {
 func GetArmorAblated(params DamageParams) int {
 	armorAblated := 1
 
-	if params.AmmunitionType == ArmorPiercing {
+	if params.AmmunitionType == ArmorPiercing && params.UsesAmmunition {
 		armorAblated++
 	}
 
@@ -447,7 +524,13 @@ func (scenario *CombatScenario) GetAttackModifiers() int {
 		totalModifier += 1
 	}
 
+	if !scenario.Attacker.CurrentWeapon.Unarmed && scenario.Attacker.ExcellentWeapon {
+		totalModifier += 1
+	}
+
 	totalModifier += scenario.Attacker.CombatAwareness
+	totalModifier += scenario.Attacker.GetWoundPenalty()
+	totalModifier += scenario.Attacker.ArmorPenalty
 
 	return totalModifier + GetTotalModifiers(scenario.Attacker.AttackModifiers)
 }
@@ -491,17 +574,17 @@ func (scenario *CombatScenario) GetDV() int {
 func (scenario *CombatScenario) GetDefenderDVModifier() int {
 	totalModifiers := 0
 	totalModifiers += scenario.Defender.ArmorPenalty
-	totalModifiers += scenario.GetDefenderWoundPenalty()
+	totalModifiers += scenario.Defender.GetWoundPenalty()
 	return totalModifiers
 }
 
-func (scenario *CombatScenario) GetDefenderWoundPenalty() int {
+func (character *CurrentCharacter) GetWoundPenalty() int {
 	halfHP := 0
-	if scenario.Defender.CurrentHP > 0 {
-		halfHP = int(math.Ceil((float64(scenario.Defender.MaxHP) / 2)))
+	if character.CurrentHP > 0 {
+		halfHP = int(math.Ceil((float64(character.MaxHP) / 2)))
 	}
 
-	if scenario.Defender.CurrentHP <= halfHP {
+	if character.CurrentHP <= halfHP {
 		return -2
 	}
 
@@ -569,4 +652,5 @@ type DamageParams struct {
 	AttackType     AttackType
 	AmmunitionType AmmunitionType
 	HalvesArmor    bool
+	UsesAmmunition bool
 }

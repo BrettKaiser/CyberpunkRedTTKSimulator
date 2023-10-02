@@ -10,6 +10,15 @@ var CyberPsycho = Character{
 	ShouldDodge:    true,
 }
 
+var CyberPsychoTech = Character{
+	CharacterStats: CyberPsychoTechStats,
+	Weapon:         HeavyPistol,
+	ArmorValue:     12,
+	ArmorPenalty:   0,
+	ShouldDodge:    true,
+	IsTech:         true,
+}
+
 var BoostGanger = Character{
 	CharacterStats: BoostGangerStats,
 	Weapon:         HeavyPistol,
@@ -47,6 +56,15 @@ var BoostGangerStats = CharacterStats{
 
 var CyberPsychoStats = CharacterStats{
 	Name:      "CyberPsycho",
+	MaxHP:     55,
+	Reflexes:  8,
+	Dexterity: 8,
+	Evasion:   6,
+	Brawling:  6,
+}
+
+var CyberPsychoTechStats = CharacterStats{
+	Name:      "CyberPsychoTech",
 	MaxHP:     55,
 	Reflexes:  8,
 	Dexterity: 8,

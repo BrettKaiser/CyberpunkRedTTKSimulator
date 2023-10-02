@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 1000
+const ITERATIONS = 10000
 
 const MAXIMUMROUNDS = 100
 
@@ -47,88 +47,101 @@ type PerBandResult struct {
 }
 
 func Run(params SimulationParams) {
-	enemy := BoostGanger
-	perBandResults := make([]PerBandResult, 0)
-	attacker := Character{
-		CharacterStats:  PlayerCharacter,
-		Weapon:          HeavyPistol,
-		ArmorValue:      11,
-		ArmorPenalty:    0,
-		HasSmartLink:    false,
-		AimedShotBonus:  0,
-		CombatAwareness: 0,
-		ExtendedClip:    false,
-		DrumClip:        false,
+	enemies := []Character{
+		// BoostGanger,
+		CyberPsychoTech,
 	}
+	ammunitionTypes := []AmmunitionType{
+		Basic,
+		// ArmorPiercing,
+	}
+	for _, ammunitionType := range ammunitionTypes {
+		for _, enemy := range enemies {
+			perBandResults := make([]PerBandResult, 0)
+			attacker := Character{
+				CharacterStats:  PlayerCharacter,
+				Weapon:          HeavyPistol, // this is filler, it gets overwritten in the scenario
+				ArmorValue:      11,
+				ArmorPenalty:    0,
+				HasSmartLink:    false,
+				AimedShotBonus:  0,
+				CombatAwareness: 0,
+				ExtendedClip:    false,
+				DrumClip:        false,
+				ExcellentWeapon: false,
+			}
 
-	fmt.Printf("\nCharacter Name: %s / Has Smartlink: %t / Combat Awareness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t\n",
-		attacker.Name, attacker.HasSmartLink, attacker.CombatAwareness, attacker.AimedShotBonus, attacker.ExtendedClip, attacker.DrumClip,
-	)
+			fmt.Printf("\nCharacter Name: %s / Ammunition Type: %s / Has Smartlink: %t / Combat Awareness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t / Enemy: %s / Enemy AP: %d\n",
+				attacker.Name, ammunitionType, attacker.HasSmartLink, attacker.CombatAwareness, attacker.AimedShotBonus, attacker.ExtendedClip, attacker.DrumClip, enemy.Name, enemy.ArmorValue,
+			)
 
-	for _, rangeBand := range RangeBands {
-		newRangeBandResult := PerBandResult{
-			RangeBandName:      rangeBand.Name,
-			RunResultsByWeapon: []WeaponRunResult{},
-		}
-
-		var perBandWeaponGroup sync.WaitGroup
-
-		for _, weapon := range WeaponsList {
-			perBandWeaponGroup.Add(1)
-			go func(weapon Weapon) {
-				defer perBandWeaponGroup.Done()
-				weaponRunResult := WeaponRunResult{
-					WeaponName: weapon.Name,
-					RunResults: []RunResult{},
+			for _, rangeBand := range RangeBands {
+				newRangeBandResult := PerBandResult{
+					RangeBandName:      rangeBand.Name,
+					RunResultsByWeapon: []WeaponRunResult{},
 				}
 
-				var perWeaponAttackTypeGroup sync.WaitGroup
+				var perBandWeaponGroup sync.WaitGroup
 
-				for _, attackType := range AttackTypes {
-					perWeaponAttackTypeGroup.Add(1)
-					go func(attackType AttackType) {
-						defer perWeaponAttackTypeGroup.Done()
-						scenarioParams := ScenarioParams{
-							Ammunition: Basic,
-							AttackType: attackType,
-							Attacker:   attacker,
-							Defender:   enemy,
-							RangeBand:  rangeBand,
-							DebugLogs:  params.DebugLogs,
-							Iterations: params.Iterations,
+				for _, weapon := range WeaponsList {
+					perBandWeaponGroup.Add(1)
+					go func(weapon Weapon) {
+						defer perBandWeaponGroup.Done()
+						weaponRunResult := WeaponRunResult{
+							WeaponName: weapon.Name,
+							RunResults: []RunResult{},
 						}
 
-						scenarioParams.Attacker.Weapon = weapon
+						var perWeaponAttackTypeGroup sync.WaitGroup
 
-						runResult := runScenario(scenarioParams)
-						weaponRunResult.RunResults = append(weaponRunResult.RunResults, runResult)
-					}(attackType)
+						for _, attackType := range AttackTypes {
+							perWeaponAttackTypeGroup.Add(1)
+							go func(attackType AttackType) {
+								defer perWeaponAttackTypeGroup.Done()
+								scenarioParams := ScenarioParams{
+									Ammunition: ammunitionType,
+									AttackType: attackType,
+									Attacker:   attacker,
+									Defender:   enemy,
+									RangeBand:  rangeBand,
+									DebugLogs:  params.DebugLogs,
+									Iterations: params.Iterations,
+								}
+
+								scenarioParams.Attacker.Weapon = weapon
+
+								runResult := runScenario(scenarioParams)
+								weaponRunResult.RunResults = append(weaponRunResult.RunResults, runResult)
+							}(attackType)
+						}
+						perWeaponAttackTypeGroup.Wait()
+
+						sort.Slice(weaponRunResult.RunResults, func(i, j int) bool {
+							// 	Put SingleShot attack type first, then Headshot and finally Autofire
+							if weaponRunResult.RunResults[i].AttackType == string(SingleShot) {
+								return true
+							} else if weaponRunResult.RunResults[i].AttackType == string(Headshot) && weaponRunResult.RunResults[j].AttackType == string(Autofire) {
+								return true
+							} else {
+								return false
+							}
+						})
+
+						newRangeBandResult.RunResultsByWeapon = append(newRangeBandResult.RunResultsByWeapon, weaponRunResult)
+					}(weapon)
 				}
-				perWeaponAttackTypeGroup.Wait()
 
-				sort.Slice(weaponRunResult.RunResults, func(i, j int) bool {
-					// 	Put SingleShot attack type first, then Headshot and finally Autofire
-					if weaponRunResult.RunResults[i].AttackType == string(SingleShot) {
-						return true
-					} else if weaponRunResult.RunResults[i].AttackType == string(Headshot) && weaponRunResult.RunResults[j].AttackType == string(Autofire) {
-						return true
-					} else {
-						return false
-					}
-				})
+				perBandWeaponGroup.Wait()
+				perBandResults = append(perBandResults, newRangeBandResult)
+			}
 
-				newRangeBandResult.RunResultsByWeapon = append(newRangeBandResult.RunResultsByWeapon, weaponRunResult)
-			}(weapon)
+			fmt.Println("\n*************** Results By Average RTK ****************")
+			displayTableByAverageRTKACrossRangeBands(perBandResults)
+			fmt.Println("\n*************** Results By Lowest RTK Per Range Band ****************")
+			displayTableByLowestRTKPerRangeBand(perBandResults)
 		}
-
-		perBandWeaponGroup.Wait()
-		perBandResults = append(perBandResults, newRangeBandResult)
 	}
 
-	fmt.Println("\n*************** Results By Average RTK ****************")
-	displayTableByAverageRTKACrossRangeBands(perBandResults)
-	fmt.Println("\n*************** Results By Lowest RTK Per Range Band ****************")
-	displayTableByLowestRTKPerRangeBand(perBandResults)
 }
 
 type WeaponRunResult struct {
@@ -137,26 +150,32 @@ type WeaponRunResult struct {
 }
 
 type RunResult struct {
-	AverageAttacksToKill      string
-	AverageRoundsToKill       string
-	AverageNumberOfReloads    string
-	AverageRoundsSpentRunning string
-	AttackType                string
-	WeaponName                string
+	AverageAttacksToKill          string
+	AverageRoundsToKill           string
+	AverageNumberOfReloads        string
+	AverageRoundsSpentRunning     string
+	AttackType                    string
+	WeaponName                    string
+	AverageEddiesSpentPerScenario string
+	SetupCost                     string
 }
 
 func runScenario(scenarioParams ScenarioParams) RunResult {
 	runResult := RunResult{
-		AttackType:           string(scenarioParams.AttackType),
-		WeaponName:           scenarioParams.Attacker.Weapon.Name,
-		AverageAttacksToKill: "NA",
-		AverageRoundsToKill:  "NA",
+		AttackType:                    string(scenarioParams.AttackType),
+		WeaponName:                    scenarioParams.Attacker.Weapon.Name,
+		AverageAttacksToKill:          "NA",
+		AverageRoundsToKill:           "NA",
+		AverageEddiesSpentPerScenario: "NA",
+		SetupCost:                     "NA",
 	}
 
 	scenariosRun := []CombatScenario{}
 
-	fmt.Printf("Running Scenario -  Enemy: %s / Range Band: %s / Weapon: %s / Attack Type: %s\n",
-		scenarioParams.Defender.Name, scenarioParams.RangeBand.Name, scenarioParams.Attacker.Weapon.Name, scenarioParams.AttackType)
+	if scenarioParams.DebugLogs {
+		fmt.Printf("Running Scenario -  Enemy: %s / Range Band: %s / Weapon: %s / Attack Type: %s\n",
+			scenarioParams.Defender.Name, scenarioParams.RangeBand.Name, scenarioParams.Attacker.Weapon.Name, scenarioParams.AttackType)
+	}
 
 	switch scenarioParams.AttackType {
 	case Autofire:
@@ -165,6 +184,13 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 		}
 	case Headshot:
 		if !scenarioParams.Attacker.Weapon.CanAimedShot {
+			return runResult
+		}
+	}
+
+	switch scenarioParams.Ammunition {
+	case Basic:
+		if scenarioParams.Attacker.Weapon.Explosive {
 			return runResult
 		}
 	}
@@ -186,6 +212,8 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 	runResult.AverageAttacksToKill = fmt.Sprintf("%.3f", getAverageAttacksToKill(scenariosRun))
 	runResult.AverageNumberOfReloads = fmt.Sprintf("%.2f", getAverageReloads(scenariosRun))
 	runResult.AverageRoundsSpentRunning = fmt.Sprintf("%.2f", getAverageRunningInstances(scenariosRun))
+	runResult.AverageEddiesSpentPerScenario = fmt.Sprintf("%.2f", getAverageEddiesSpent(scenariosRun))
+	runResult.SetupCost = fmt.Sprintf("%d", scenariosRun[0].SetupCost)
 
 	return runResult
 }
@@ -233,6 +261,18 @@ func getAverageRunningInstances(scenarios []CombatScenario) float64 {
 	for i, _ := range scenarios {
 		numberOfScenarios++
 		total += scenarios[i].RoundsSpentRunning
+	}
+
+	return float64(total) / float64(numberOfScenarios)
+}
+
+func getAverageEddiesSpent(scenarios []CombatScenario) float64 {
+	total := 0
+	numberOfScenarios := 0
+
+	for i, _ := range scenarios {
+		numberOfScenarios++
+		total += scenarios[i].ScenarioCost
 	}
 
 	return float64(total) / float64(numberOfScenarios)

@@ -73,7 +73,7 @@ func getRowsTableByLowestRTKPerRangeBand(perBandResults []PerBandResult) []table
 		})
 	}
 
-	for i := 0; i < len(rangeBandValues[VeryClose.Name]); i++ {
+	for i := 0; i < len(rangeBandValues[VeryClose.Name])-1; i++ {
 		newRow := table.Row{}
 		for _, rangeBand := range RangeBands {
 			newRow = append(newRow, fmt.Sprintf("%s - %s", rangeBandValues[rangeBand.Name][i].AverageRoundsToKill, rangeBandValues[rangeBand.Name][i].WeaponAttackType))
@@ -91,6 +91,8 @@ func displayTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) {
 		headerRow = append(headerRow, fmt.Sprintf("%s (RTK)", string(rangeBand.Name)))
 	}
 	headerRow = append(headerRow, "Total Average RTK")
+	headerRow = append(headerRow, "Average Eddies Spent In Combat")
+	headerRow = append(headerRow, "Eddies Spent On Setup")
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
@@ -106,6 +108,8 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 	// Get a map of Weapon Name / Attack Type / Average Rounds To Kill For Each Range Band
 	rangeBandsByWeaponAndAttackType := map[string][]string{}
 	totalTimeToKillPerWeaponAndAttackType := map[string]float64{}
+	eddiesPerScenarioSpentByAttackType := map[string]float64{}
+	setupCost := map[string]string{}
 
 	for _, bandResult := range perBandResults {
 		for _, weaponResults := range bandResult.RunResultsByWeapon {
@@ -120,15 +124,28 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 
 				if attackTypeResults.AverageRoundsToKill == "NA" {
 					totalTimeToKillPerWeaponAndAttackType[rowName] += 1000
+					eddiesPerScenarioSpentByAttackType[rowName] = 0
+					setupCost[rowName] = "NA"
 				} else {
 					roundsToKillFloat, err := strconv.ParseFloat(attackTypeResults.AverageRoundsToKill, 64)
 					if err != nil {
 						panic("tried to parse a non-float value")
 					}
 					totalTimeToKillPerWeaponAndAttackType[rowName] += roundsToKillFloat
+
+					eddiesPerScenarioFloat, err := strconv.ParseFloat(attackTypeResults.AverageEddiesSpentPerScenario, 64)
+					if err != nil {
+						panic("tried to parse a non-float value")
+					}
+					eddiesPerScenarioSpentByAttackType[rowName] += eddiesPerScenarioFloat
+					setupCost[rowName] = attackTypeResults.SetupCost
 				}
 			}
 		}
+	}
+
+	for key, value := range eddiesPerScenarioSpentByAttackType {
+		eddiesPerScenarioSpentByAttackType[key] = value / 6
 	}
 
 	// Put the map into a slice of slices of strings
@@ -137,6 +154,8 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 		newRow := []string{weaponAttackType}
 		newRow = append(newRow, rangeBandResults...)
 		newRow = append(newRow, fmt.Sprintf("%.3f", totalTimeToKillPerWeaponAndAttackType[weaponAttackType]))
+		newRow = append(newRow, fmt.Sprintf("$%.2f", eddiesPerScenarioSpentByAttackType[weaponAttackType]))
+		newRow = append(newRow, fmt.Sprintf("$%s", setupCost[weaponAttackType]))
 		weaponAttackTypeRows = append(weaponAttackTypeRows, newRow)
 	}
 

@@ -58,18 +58,3 @@ var RangeBands = []RangeBand{
 	// VeryVeryFar,
 	// InsanelyFar,
 }
-
-type Ammunition struct {
-	Name string
-	Cost int `json:"cost"`
-}
-
-type AmmunitionType string
-
-const (
-	Basic         AmmunitionType = "basic"
-	ArmorPiercing AmmunitionType = "armor_piercing"
-	Incendiary    AmmunitionType = "incendiary"
-)
-
-type WeaponType string
