@@ -1,21 +1,23 @@
 package main
 
 var WeaponsList = []Weapon{
-	BrawlingStrike7Body,
-	BrawlingStrike11Body,
 	BrawlingChoke7Body,
 	BrawlingChoke10Body,
 	BrawlingChoke12Body,
 	BrawlingChoke14Body,
+	BrawlingStrike7Body,
+	BrawlingStrike11Body,
+	HeavyMelee,
+	Body7MartialArt,
+	Body11MartialArt,
+
 	HeavyPistol,
 	VeryHeavyPistol,
 	ExoticHeavyPistol,
-	HeavyMelee,
-	Body11MartialArt,
-	Body7MartialArt,
 	GrenadeLauncher,
 	RocketLauncher,
 	AssaultRifle,
+	SniperRifle,
 	SMG,
 	HeavySMG,
 	Shotgun,
@@ -262,6 +264,22 @@ var AssaultRifle = Weapon{
 	AutofireRangeBandDVs: AssaultRifleAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             25,
+}
+
+var SniperRifle = Weapon{
+	Name:                 "Sniper Rifle",
+	DamageDice:           5,
+	RangeBandDVs:         SniperRifleRangeBands,
+	RequiredHands:        2,
+	RateOfFire:           1,
+	Skill:                ShoulderArms,
+	Ranged:               true,
+	CanAutofire:          false,
+	CanAimedShot:         true,
+	AutofireDice:         0,
+	AutofireRangeBandDVs: nil,
+	HalvesArmor:          false,
+	ClipSize:             4,
 }
 
 var SMG = Weapon{

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 10000
+const ITERATIONS = 5000
 
 const MaximumRounds = 10000
 
@@ -50,7 +50,7 @@ type PerBandResult struct {
 }
 
 func Run(params SimulationParams) {
-	enemy := BoostGanger
+	enemy := CyberPsycho
 	perBandResults := make([]PerBandResult, 0)
 
 	for _, rangeBand := range RangeBands {
@@ -143,8 +143,8 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 
 	scenariosRun := []CombatScenario{}
 
-	fmt.Printf("Running Scenario - Range Band: %s, Weapon: %s, Attack Type: %s, Enemy: %s\n",
-		scenarioParams.Attacker.Weapon.Name, scenarioParams.Defender.Name, scenarioParams.AttackType)
+	fmt.Printf("Running Scenario -  Enemy: %s / Range Band: %s / Weapon: %s / Attack Type: %s\n",
+		scenarioParams.Defender.Name, scenarioParams.RangeBand.Name, scenarioParams.Attacker.Weapon.Name, scenarioParams.AttackType)
 
 	switch scenarioParams.AttackType {
 	case Autofire:
@@ -170,11 +170,8 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 		}
 	}
 
-	averageAttacksToKill := getAverageAttacksToKill(scenariosRun)
-	averageRoundsToKill := getAverageRoundsToKill(scenariosRun)
-
-	runResult.AverageRoundsToKill = fmt.Sprintf("%.3f", averageRoundsToKill)
-	runResult.AverageAttacksToKill = fmt.Sprintf("%.3f", averageAttacksToKill)
+	runResult.AverageRoundsToKill = fmt.Sprintf("%.3f", getAverageRoundsToKill(scenariosRun))
+	runResult.AverageAttacksToKill = fmt.Sprintf("%.3f", getAverageAttacksToKill(scenariosRun))
 	runResult.AverageNumberOfReloads = fmt.Sprintf("%.2f", getAverageReloads(scenariosRun))
 	runResult.AverageRoundsSpentRunning = fmt.Sprintf("%.2f", getAverageRunningInstances(scenariosRun))
 
