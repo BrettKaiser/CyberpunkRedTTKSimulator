@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 1
+const ITERATIONS = 10000
 
 const MaximumRounds = 100
 
@@ -47,7 +47,8 @@ func main() {
 func Run(params SimulationParams) {
 	completedRuns := []WeaponRunResult{}
 	var weaponGroup sync.WaitGroup
-	rangeBand := VeryFar
+	rangeBand := Medium
+	enemy := BoostGanger
 
 	for _, weapon := range WeaponsList {
 		weaponGroup.Add(1)
@@ -73,7 +74,7 @@ func Run(params SimulationParams) {
 							ArmorValue:     11,
 							ArmorPenalty:   0,
 						},
-						Defender:   CyberPsycho,
+						Defender:   enemy,
 						RangeBand:  rangeBand,
 						DebugLogs:  params.DebugLogs,
 						Iterations: params.Iterations,

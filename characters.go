@@ -42,6 +42,8 @@ var BoostGangerStats = CharacterStats{
 	MaxHP:     20,
 	Reflexes:  6,
 	Dexterity: 5,
+	Brawling:  4,
+	Movement:  4,
 	Evasion:   0,
 }
 
