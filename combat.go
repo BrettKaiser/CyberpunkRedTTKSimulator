@@ -79,7 +79,7 @@ func (scenario *CombatScenario) inMeleeRange() bool {
 }
 
 func (scenario *CombatScenario) Execute() CombatScenario {
-	for i := 0; i < MaximumRounds; i++ {
+	for i := 0; i < MAXIMUMROUNDS; i++ {
 		if scenario.Defender.CurrentHP <= 0 {
 			break
 		}

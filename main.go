@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-const ITERATIONS = 5000
+const ITERATIONS = 10000
 
-const MaximumRounds = 10000
+const MAXIMUMROUNDS = 100
 
 type SimulationParams struct {
 	Iterations int
@@ -52,6 +52,19 @@ type PerBandResult struct {
 func Run(params SimulationParams) {
 	enemy := CyberPsycho
 	perBandResults := make([]PerBandResult, 0)
+	attacker := Character{
+		CharacterStats:  PlayerCharacter,
+		Weapon:          HeavyPistol,
+		ArmorValue:      11,
+		ArmorPenalty:    0,
+		HasSmartLink:    true,
+		AimedShotBonus:  1,
+		CombatAwareness: 3,
+	}
+
+	fmt.Printf("\nCharacter Name: %s / Has Smartlink: %b / Combat Awareness: %d / Aimed Shot: %d\n",
+		attacker.Name, attacker.HasSmartLink, attacker.CombatAwareness, attacker.AimedShotBonus,
+	)
 
 	for _, rangeBand := range RangeBands {
 		newRangeBandResult := PerBandResult{
@@ -79,17 +92,14 @@ func Run(params SimulationParams) {
 						scenarioParams := ScenarioParams{
 							Ammunition: Basic,
 							AttackType: attackType,
-							Attacker: Character{
-								CharacterStats: PlayerCharacter,
-								Weapon:         weapon,
-								ArmorValue:     11,
-								ArmorPenalty:   0,
-							},
+							Attacker:   attacker,
 							Defender:   enemy,
 							RangeBand:  rangeBand,
 							DebugLogs:  params.DebugLogs,
 							Iterations: params.Iterations,
 						}
+
+						scenarioParams.Attacker.Weapon = weapon
 
 						runResult := runScenario(scenarioParams)
 						weaponRunResult.RunResults = append(weaponRunResult.RunResults, runResult)
