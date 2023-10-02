@@ -7,19 +7,27 @@ var WeaponsList = []Weapon{
 	BrawlingChoke14Body,
 	BrawlingStrike7Body,
 	BrawlingStrike11Body,
+
 	HeavyMelee,
+	VeryHeavyMelee,
+
 	Body7MartialArt,
 	Body11MartialArt,
 
+	MediumPistol,
 	HeavyPistol,
 	VeryHeavyPistol,
 	ExoticHeavyPistol,
+
 	GrenadeLauncher,
 	RocketLauncher,
+
 	AssaultRifle,
 	SniperRifle,
+
 	SMG,
 	HeavySMG,
+
 	Shotgun,
 }
 
@@ -27,6 +35,8 @@ type Weapon struct {
 	Name                 string            `json:"name"`
 	DamageDice           int               `json:"damage_dice"`
 	ClipSize             int               `json:"clip_size"`
+	ExtendedClipSize     int               `json:"extended_clip_size"`
+	DrumClipSize         int               `json:"drum_clip_size"`
 	RangeBandDVs         map[RangeBand]int `json:"range_band_dv_s"`
 	AutofireRangeBandDVs map[RangeBand]int `json:"autofire_range_band_dv_s"`
 	RequiredHands        int               `json:"required_hands"`
@@ -47,6 +57,20 @@ var HeavyMelee = Weapon{
 	RangeBandDVs:  nil,
 	RequiredHands: 2,
 	RateOfFire:    2,
+	Skill:         Melee,
+	Ranged:        false,
+	CanAutofire:   false,
+	CanAimedShot:  true,
+	AutofireDice:  0,
+	HalvesArmor:   true,
+}
+
+var VeryHeavyMelee = Weapon{
+	Name:          "Very Heavy Melee",
+	DamageDice:    4,
+	RangeBandDVs:  nil,
+	RequiredHands: 2,
+	RateOfFire:    1,
 	Skill:         Melee,
 	Ranged:        false,
 	CanAutofire:   false,
@@ -84,7 +108,7 @@ var Body7MartialArt = Weapon{
 }
 
 var BrawlingStrike7Body = Weapon{
-	Name:          "Brawling Strike 11 Body",
+	Name:          "Brawling Strike 7 Body",
 	DamageDice:    3,
 	RangeBandDVs:  nil,
 	RequiredHands: 1,
@@ -175,79 +199,106 @@ var BrawlingChoke14Body = Weapon{
 	ChokeDamage:   14,
 }
 
+var MediumPistol = Weapon{
+	Name:             "Medium Pistol",
+	DamageDice:       2,
+	RangeBandDVs:     PistolRangeBands,
+	RequiredHands:    1,
+	RateOfFire:       2,
+	Skill:            Handguns,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         12,
+	ExtendedClipSize: 18,
+	DrumClipSize:     36,
+}
+
 var HeavyPistol = Weapon{
-	Name:          "Heavy Pistol",
-	DamageDice:    3,
-	RangeBandDVs:  PistolRangeBands,
-	RequiredHands: 1,
-	RateOfFire:    2,
-	Skill:         Handguns,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  true,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      8,
+	Name:             "Heavy Pistol",
+	DamageDice:       3,
+	RangeBandDVs:     PistolRangeBands,
+	RequiredHands:    1,
+	RateOfFire:       2,
+	Skill:            Handguns,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         8,
+	ExtendedClipSize: 14,
+	DrumClipSize:     28,
 }
 
 var VeryHeavyPistol = Weapon{
-	Name:          "Very Heavy Pistol",
-	DamageDice:    4,
-	RangeBandDVs:  PistolRangeBands,
-	RequiredHands: 1,
-	RateOfFire:    1,
-	Skill:         Handguns,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  true,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      8,
+	Name:             "Very Heavy Pistol",
+	DamageDice:       4,
+	RangeBandDVs:     PistolRangeBands,
+	RequiredHands:    1,
+	RateOfFire:       1,
+	Skill:            Handguns,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         8,
+	ExtendedClipSize: 14,
+	DrumClipSize:     28,
 }
 
 var ExoticHeavyPistol = Weapon{
-	Name:          "Exotic Pistol",
-	DamageDice:    5,
-	RangeBandDVs:  PistolRangeBands,
-	RequiredHands: 1,
-	RateOfFire:    1,
-	Skill:         Handguns,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  true,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      8,
+	Name:             "Exotic Pistol",
+	DamageDice:       5,
+	RangeBandDVs:     PistolRangeBands,
+	RequiredHands:    1,
+	RateOfFire:       1,
+	Skill:            Handguns,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         8,
+	ExtendedClipSize: 8,
+	DrumClipSize:     8,
 }
 
 var GrenadeLauncher = Weapon{
-	Name:          "Grenade Launcher",
-	DamageDice:    6,
-	RangeBandDVs:  GrenadeLauncherRangeBands,
-	RequiredHands: 2,
-	RateOfFire:    1,
-	Skill:         HeavyWeapons,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  false,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      2,
+	Name:             "Grenade Launcher",
+	DamageDice:       6,
+	RangeBandDVs:     GrenadeLauncherRangeBands,
+	RequiredHands:    2,
+	RateOfFire:       1,
+	Skill:            HeavyWeapons,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     false,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         2,
+	ExtendedClipSize: 4,
+	DrumClipSize:     6,
 }
 
 var RocketLauncher = Weapon{
-	Name:          "Rocket Launcher",
-	DamageDice:    8,
-	RangeBandDVs:  GrenadeLauncherRangeBands,
-	RequiredHands: 2,
-	RateOfFire:    1,
-	Skill:         HeavyWeapons,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  false,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      1,
+	Name:             "Rocket Launcher",
+	DamageDice:       8,
+	RangeBandDVs:     GrenadeLauncherRangeBands,
+	RequiredHands:    2,
+	RateOfFire:       1,
+	Skill:            HeavyWeapons,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     false,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         1,
+	ExtendedClipSize: 2,
+	DrumClipSize:     3,
 }
 
 var AssaultRifle = Weapon{
@@ -264,6 +315,8 @@ var AssaultRifle = Weapon{
 	AutofireRangeBandDVs: AssaultRifleAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             25,
+	ExtendedClipSize:     35,
+	DrumClipSize:         45,
 }
 
 var SniperRifle = Weapon{
@@ -280,6 +333,8 @@ var SniperRifle = Weapon{
 	AutofireRangeBandDVs: nil,
 	HalvesArmor:          false,
 	ClipSize:             4,
+	ExtendedClipSize:     8,
+	DrumClipSize:         12,
 }
 
 var SMG = Weapon{
@@ -296,6 +351,8 @@ var SMG = Weapon{
 	AutofireRangeBandDVs: SMGAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             30,
+	ExtendedClipSize:     40,
+	DrumClipSize:         50,
 }
 
 var HeavySMG = Weapon{
@@ -312,21 +369,25 @@ var HeavySMG = Weapon{
 	AutofireRangeBandDVs: SMGAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             40,
+	ExtendedClipSize:     50,
+	DrumClipSize:         60,
 }
 
 var Shotgun = Weapon{
-	Name:          "Shotgun",
-	DamageDice:    5,
-	RangeBandDVs:  ShotgunRangeBands,
-	RequiredHands: 2,
-	RateOfFire:    1,
-	Skill:         ShoulderArms,
-	Ranged:        true,
-	CanAutofire:   false,
-	CanAimedShot:  true,
-	AutofireDice:  0,
-	HalvesArmor:   false,
-	ClipSize:      4,
+	Name:             "Shotgun",
+	DamageDice:       5,
+	RangeBandDVs:     ShotgunRangeBands,
+	RequiredHands:    2,
+	RateOfFire:       1,
+	Skill:            ShoulderArms,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireDice:     0,
+	HalvesArmor:      false,
+	ClipSize:         4,
+	ExtendedClipSize: 8,
+	DrumClipSize:     16,
 }
 
 var PistolRangeBands = map[RangeBand]int{

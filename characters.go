@@ -2,6 +2,22 @@ package main
 
 var PCStatsAt = 10
 
+var CyberPsycho = Character{
+	CharacterStats: CyberPsychoStats,
+	Weapon:         HeavyPistol,
+	ArmorValue:     12,
+	ArmorPenalty:   0,
+	ShouldDodge:    true,
+}
+
+var BoostGanger = Character{
+	CharacterStats: BoostGangerStats,
+	Weapon:         HeavyPistol,
+	ArmorValue:     4,
+	ArmorPenalty:   0,
+	ShouldDodge:    false,
+}
+
 var PlayerCharacter = CharacterStats{
 	Name:            "Player",
 	MaxHP:           40,
@@ -29,14 +45,6 @@ var BoostGangerStats = CharacterStats{
 	Evasion:   0,
 }
 
-var BoostGanger = Character{
-	CharacterStats: BoostGangerStats,
-	Weapon:         HeavyPistol,
-	ArmorValue:     4,
-	ArmorPenalty:   0,
-	ShouldDodge:    false,
-}
-
 var CyberPsychoStats = CharacterStats{
 	Name:      "CyberPsycho",
 	MaxHP:     55,
@@ -44,12 +52,4 @@ var CyberPsychoStats = CharacterStats{
 	Dexterity: 8,
 	Evasion:   6,
 	Brawling:  6,
-}
-
-var CyberPsycho = Character{
-	CharacterStats: CyberPsychoStats,
-	Weapon:         HeavyPistol,
-	ArmorValue:     12,
-	ArmorPenalty:   0,
-	ShouldDodge:    true,
 }

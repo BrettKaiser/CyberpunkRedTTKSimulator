@@ -19,6 +19,8 @@ type Character struct {
 	HasSmartLink    bool `json:"has_smart_link"`
 	CombatAwareness int  `json:"combat_awareness"`
 	AimedShotBonus  int  `json:"aimed_shot_bonus"`
+	ExtendedClip    bool `json:"extended_clip"`
+	DrumClip        bool `json:"drum_clip"`
 }
 
 type CharacterStats struct {

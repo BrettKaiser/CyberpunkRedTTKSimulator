@@ -39,7 +39,9 @@ type CombatScenario struct {
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
-	rand.Seed(time.Now().UnixNano()) // only run once
+	// Create a new random seed to make this scenario different
+	rand.Seed(time.Now().UnixNano())
+
 	return CombatScenario{
 		DebugLogs:  params.DebugLogs,
 		Ammunition: params.Ammunition,
@@ -49,7 +51,7 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 			CurrentHP: params.Attacker.MaxHP,
 			CurrentWeapon: CurrentWeapon{
 				Weapon:          params.Attacker.Weapon,
-				CurrentClipSize: params.Attacker.Weapon.ClipSize,
+				CurrentClipSize: getClipSize(params.Attacker),
 			},
 		},
 		Defender: CurrentCharacter{
@@ -57,7 +59,7 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 			CurrentHP: params.Defender.MaxHP,
 			CurrentWeapon: CurrentWeapon{
 				Weapon:          params.Defender.Weapon,
-				CurrentClipSize: params.Defender.Weapon.ClipSize,
+				CurrentClipSize: getClipSize(params.Defender),
 			},
 		},
 		InGrapple:                 false,
@@ -70,6 +72,20 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 		NumberOfRounds:  0,
 		NumberOfReloads: 0,
 	}
+}
+
+func getClipSize(character Character) int {
+	clipSize := character.Weapon.ClipSize
+
+	if character.ExtendedClip {
+		clipSize = character.Weapon.ExtendedClipSize
+	}
+
+	if character.DrumClip {
+		clipSize = character.Weapon.DrumClipSize
+	}
+
+	return clipSize
 }
 
 func (scenario *CombatScenario) inMeleeRange() bool {
@@ -206,11 +222,11 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 
 func (scenario *CombatScenario) Reload(currentWeapon CurrentWeapon) {
 	scenario.NumberOfReloads++
-	scenario.Attacker.CurrentWeapon.reload()
+	scenario.Attacker.CurrentWeapon.reload(scenario.Attacker.Character)
 }
 
-func (weapon *CurrentWeapon) reload() {
-	weapon.CurrentClipSize = weapon.ClipSize
+func (weapon *CurrentWeapon) reload(character Character) {
+	weapon.CurrentClipSize = getClipSize(character)
 }
 
 func (scenario *CombatScenario) doesAttackerWinGrappleCheck() bool {
