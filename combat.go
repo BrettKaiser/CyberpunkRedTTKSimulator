@@ -78,14 +78,6 @@ func (scenario *CombatScenario) inMeleeRange() bool {
 	return true
 }
 
-func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
-	scenario.DistanceBetweenCharacters -= character.Movement
-
-	if scenario.DistanceBetweenCharacters < 0 {
-		scenario.DistanceBetweenCharacters = 0
-	}
-}
-
 func (scenario *CombatScenario) Execute() CombatScenario {
 	for i := 0; i < MaximumRounds; i++ {
 		if scenario.Defender.CurrentHP <= 0 {
@@ -122,17 +114,6 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 	}
 
 	return *scenario
-}
-
-func (scenario *CombatScenario) grappledSuccessfully() bool {
-	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, 0)
-	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, 0)
-
-	if attackerRoll > defenderRoll {
-		return true
-	}
-
-	return false
 }
 
 func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
@@ -214,6 +195,25 @@ func (scenario *CombatScenario) Reload(currentWeapon CurrentWeapon) {
 
 func (weapon *CurrentWeapon) reload() {
 	weapon.CurrentClipSize = weapon.ClipSize
+}
+
+func (scenario *CombatScenario) grappledSuccessfully() bool {
+	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, 0)
+	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, 0)
+
+	if attackerRoll > defenderRoll {
+		return true
+	}
+
+	return false
+}
+
+func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
+	scenario.DistanceBetweenCharacters -= character.Movement
+
+	if scenario.DistanceBetweenCharacters < 0 {
+		scenario.DistanceBetweenCharacters = 0
+	}
 }
 
 func (weapon *CurrentWeapon) subtractAmmo(attackType AttackType) {
@@ -408,7 +408,15 @@ func (scenario *CombatScenario) GetAttackModifiers() int {
 	totalModifier := 0
 	if scenario.AttackType == Headshot {
 		totalModifier -= 8
+		totalModifier -= scenario.Attacker.AimedShotBonus
 	}
+
+	if scenario.Attacker.CurrentWeapon.Ranged && scenario.Attacker.HasSmartLink {
+		totalModifier += 1
+	}
+
+	totalModifier += scenario.Attacker.CombatAwareness
+
 	return totalModifier + GetTotalModifiers(scenario.Attacker.AttackModifiers)
 }
 

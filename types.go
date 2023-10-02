@@ -12,10 +12,13 @@ type AttackParams struct {
 
 type Character struct {
 	CharacterStats
-	Weapon       Weapon `json:"weapon"`
-	ArmorValue   int    `json:"armor"`
-	ArmorPenalty int    `json:"armor_penalty"`
-	ShouldDodge  bool
+	Weapon          Weapon `json:"weapon"`
+	ArmorValue      int    `json:"armor"`
+	ArmorPenalty    int    `json:"armor_penalty"`
+	ShouldDodge     bool
+	HasSmartLink    bool `json:"has_smart_link"`
+	CombatAwareness int  `json:"combat_awareness"`
+	AimedShotBonus  int  `json:"aimed_shot_bonus"`
 }
 
 type CharacterStats struct {

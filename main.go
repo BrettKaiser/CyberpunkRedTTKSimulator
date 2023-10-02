@@ -12,7 +12,7 @@ import (
 
 const ITERATIONS = 10000
 
-const MaximumRounds = 100
+const MaximumRounds = 10000
 
 type SimulationParams struct {
 	Iterations int
@@ -44,66 +44,79 @@ func main() {
 	fmt.Printf("\nTook %f seconds to run\n", totalTime.Seconds())
 }
 
+type PerBandResult struct {
+	RangeBandName      string
+	RunResultsByWeapon []WeaponRunResult
+}
+
 func Run(params SimulationParams) {
-	completedRuns := []WeaponRunResult{}
-	var weaponGroup sync.WaitGroup
-	rangeBand := Medium
 	enemy := BoostGanger
+	perBandResults := make([]PerBandResult, 0)
 
-	for _, weapon := range WeaponsList {
-		weaponGroup.Add(1)
-		go func(weapon Weapon) {
-			defer weaponGroup.Done()
-			weaponRunResult := WeaponRunResult{
-				WeaponName: weapon.Name,
-				RunResults: []RunResult{},
-			}
+	for _, rangeBand := range RangeBands {
+		newRangeBandResult := PerBandResult{
+			RangeBandName:      rangeBand.Name,
+			RunResultsByWeapon: []WeaponRunResult{},
+		}
 
-			var weaponAttackTypeGroup sync.WaitGroup
+		var perBandWeaponGroup sync.WaitGroup
 
-			for _, attackType := range AttackTypes {
-				weaponAttackTypeGroup.Add(1)
-				go func(attackType AttackType) {
-					defer weaponAttackTypeGroup.Done()
-					scenarioParams := ScenarioParams{
-						Ammunition: Basic,
-						AttackType: attackType,
-						Attacker: Character{
-							CharacterStats: PlayerCharacter,
-							Weapon:         weapon,
-							ArmorValue:     11,
-							ArmorPenalty:   0,
-						},
-						Defender:   enemy,
-						RangeBand:  rangeBand,
-						DebugLogs:  params.DebugLogs,
-						Iterations: params.Iterations,
-					}
-
-					runResult := runScenario(scenarioParams)
-					weaponRunResult.RunResults = append(weaponRunResult.RunResults, runResult)
-				}(attackType)
-			}
-			weaponAttackTypeGroup.Wait()
-
-			sort.Slice(weaponRunResult.RunResults, func(i, j int) bool {
-				// 	Put SingleShot attack type first, then Headshot and finally Autofire
-				if weaponRunResult.RunResults[i].AttackType == string(SingleShot) {
-					return true
-				} else if weaponRunResult.RunResults[i].AttackType == string(Headshot) && weaponRunResult.RunResults[j].AttackType == string(Autofire) {
-					return true
-				} else {
-					return false
+		for _, weapon := range WeaponsList {
+			perBandWeaponGroup.Add(1)
+			go func(weapon Weapon) {
+				defer perBandWeaponGroup.Done()
+				weaponRunResult := WeaponRunResult{
+					WeaponName: weapon.Name,
+					RunResults: []RunResult{},
 				}
-			})
 
-			completedRuns = append(completedRuns, weaponRunResult)
-		}(weapon)
+				var perWeaponAttackTypeGroup sync.WaitGroup
 
+				for _, attackType := range AttackTypes {
+					perWeaponAttackTypeGroup.Add(1)
+					go func(attackType AttackType) {
+						defer perWeaponAttackTypeGroup.Done()
+						scenarioParams := ScenarioParams{
+							Ammunition: Basic,
+							AttackType: attackType,
+							Attacker: Character{
+								CharacterStats: PlayerCharacter,
+								Weapon:         weapon,
+								ArmorValue:     11,
+								ArmorPenalty:   0,
+							},
+							Defender:   enemy,
+							RangeBand:  rangeBand,
+							DebugLogs:  params.DebugLogs,
+							Iterations: params.Iterations,
+						}
+
+						runResult := runScenario(scenarioParams)
+						weaponRunResult.RunResults = append(weaponRunResult.RunResults, runResult)
+					}(attackType)
+				}
+				perWeaponAttackTypeGroup.Wait()
+
+				sort.Slice(weaponRunResult.RunResults, func(i, j int) bool {
+					// 	Put SingleShot attack type first, then Headshot and finally Autofire
+					if weaponRunResult.RunResults[i].AttackType == string(SingleShot) {
+						return true
+					} else if weaponRunResult.RunResults[i].AttackType == string(Headshot) && weaponRunResult.RunResults[j].AttackType == string(Autofire) {
+						return true
+					} else {
+						return false
+					}
+				})
+
+				newRangeBandResult.RunResultsByWeapon = append(newRangeBandResult.RunResultsByWeapon, weaponRunResult)
+			}(weapon)
+		}
+
+		perBandWeaponGroup.Wait()
+		perBandResults = append(perBandResults, newRangeBandResult)
 	}
 
-	weaponGroup.Wait()
-	displayTable(completedRuns)
+	displayTable(perBandResults)
 }
 
 type WeaponRunResult struct {
@@ -130,8 +143,8 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 
 	scenariosRun := []CombatScenario{}
 
-	fmt.Printf("Running Scenario - Weapon: %s, Enemy: %s, Attack Type: %s, Range Band: %s\n",
-		scenarioParams.Attacker.Weapon.Name, scenarioParams.Defender.Name, scenarioParams.AttackType, scenarioParams.RangeBand.Name)
+	fmt.Printf("Running Scenario - Range Band: %s, Weapon: %s, Attack Type: %s, Enemy: %s\n",
+		scenarioParams.Attacker.Weapon.Name, scenarioParams.Defender.Name, scenarioParams.AttackType)
 
 	switch scenarioParams.AttackType {
 	case Autofire:
@@ -168,20 +181,24 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 	return runResult
 }
 
-func displayTable(weaponRunResults []WeaponRunResult) {
-	headerRow := table.Row{"Weapon"}
+func displayTable(perBandResults []PerBandResult) {
+	for _, rangeBandResult := range perBandResults {
+		fmt.Println("\n*************** Range Band: ", rangeBandResult.RangeBandName, " ****************")
+		headerRow := table.Row{"Weapon"}
 
-	// headerNames := []string{"Weapon"}
-	for _, attackType := range AttackTypes {
-		headerRow = append(headerRow, fmt.Sprintf("%s (RTK)", string(attackType)))
+		// headerNames := []string{"Weapon"}
+		for _, attackType := range AttackTypes {
+			headerRow = append(headerRow, fmt.Sprintf("%s (RTK)", string(attackType)))
+		}
+
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		t.AppendHeader(headerRow)
+		t.AppendRows(getRows(rangeBandResult.RunResultsByWeapon))
+		t.SetStyle(table.StyleColoredBright)
+		t.Render()
+		fmt.Println("\n*************** END ****************\n")
 	}
-
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(headerRow)
-	t.AppendRows(getRows(weaponRunResults))
-	t.SetStyle(table.StyleColoredBright)
-	t.Render()
 }
 
 func getRows(weaponRunResults []WeaponRunResult) []table.Row {
