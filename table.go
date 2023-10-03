@@ -37,6 +37,9 @@ func getRowsTableByLowestRTKPerRangeBand(perBandResults []PerBandResult) []table
 	for _, bandResult := range perBandResults {
 		for _, weaponResults := range bandResult.RunResultsByWeapon {
 			for _, attackTypeResults := range weaponResults.RunResults {
+				if attackTypeResults.AverageRoundsToKill == "NA" {
+					continue
+				}
 				if _, ok := rangeBandValues[bandResult.RangeBandName]; !ok {
 					rangeBandValues[bandResult.RangeBandName] = []WeaponAttackTypeResult{}
 				}
@@ -114,6 +117,9 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 	for _, bandResult := range perBandResults {
 		for _, weaponResults := range bandResult.RunResultsByWeapon {
 			for _, attackTypeResults := range weaponResults.RunResults {
+				if attackTypeResults.AverageRoundsToKill == "NA" {
+					continue
+				}
 				rowName := fmt.Sprintf("%s / %s", weaponResults.WeaponName, attackTypeResults.AttackType)
 
 				if _, ok := rangeBandsByWeaponAndAttackType[rowName]; !ok {
@@ -151,6 +157,7 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 	// Put the map into a slice of slices of strings
 	weaponAttackTypeRows := [][]string{}
 	for weaponAttackType, rangeBandResults := range rangeBandsByWeaponAndAttackType {
+
 		newRow := []string{weaponAttackType}
 		newRow = append(newRow, rangeBandResults...)
 		newRow = append(newRow, fmt.Sprintf("%.3f", totalTimeToKillPerWeaponAndAttackType[weaponAttackType]))

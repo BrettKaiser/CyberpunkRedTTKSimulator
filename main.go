@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 10000
+const ITERATIONS = 1000
 
 const MAXIMUMROUNDS = 100
 
@@ -185,6 +185,10 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 		}
 	case Headshot:
 		if !scenarioParams.Attacker.Weapon.CanAimedShot {
+			return runResult
+		}
+	case SingleShot:
+		if scenarioParams.Attacker.Weapon.CannotSingleShot {
 			return runResult
 		}
 	}

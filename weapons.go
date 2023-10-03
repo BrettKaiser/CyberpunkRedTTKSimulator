@@ -82,6 +82,7 @@ type Weapon struct {
 	AutofireMax          int               `json:"autofire_max"`
 	CanAutofire          bool              `json:"can_autofire"`
 	CanAimedShot         bool              `json:"can_aimed_shot"`
+	CannotSingleShot     bool              `json:"cannot_single_shot"`
 	HalvesArmor          bool
 	ShouldChoke          bool
 	ChokeDamage          int
@@ -469,7 +470,7 @@ var RhinemetallRailgun = Weapon{
 	ClipSize:          4,
 	ExtendedClipSize:  4,
 	DrumClipSize:      4,
-	Cost:              5000,
+	Cost:              6000,
 	TurnsToReload:     2,
 	IgnoresArmorUnder: 11,
 }
@@ -484,6 +485,7 @@ var TsunamiArmsHelix = Weapon{
 	Ranged:               true,
 	CanAutofire:          true,
 	CanAimedShot:         false,
+	CannotSingleShot:     true,
 	AutofireMax:          5,
 	AutofireRangeBandDVs: AssaultRifleAutofireRangeBands,
 	HalvesArmor:          false,
@@ -491,7 +493,7 @@ var TsunamiArmsHelix = Weapon{
 	ClipSize:             40,
 	ExtendedClipSize:     40,
 	DrumClipSize:         40,
-	Cost:                 5000,
+	Cost:                 6000,
 	TurnsToReload:        2,
 }
 
