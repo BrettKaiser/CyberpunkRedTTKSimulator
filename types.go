@@ -23,6 +23,7 @@ type Character struct {
 	DrumClip        bool `json:"drum_clip"`
 	ExcellentWeapon bool `json:"excellent_weapon"`
 	IsTech          bool
+	HasPopupShield  bool
 }
 
 type CharacterStats struct {
@@ -48,6 +49,7 @@ type CurrentCharacter struct {
 	CurrentSP     int           `json:"current_sp"`
 	Modifiers     []Modifier    `json:"modifiers"`
 	CurrentWeapon CurrentWeapon `json:"current_weapon"`
+	PopupShieldHP int           `json:"popup_shield_hp"`
 }
 
 type Modifier struct {

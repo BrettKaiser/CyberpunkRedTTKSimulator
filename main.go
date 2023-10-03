@@ -49,7 +49,7 @@ type PerBandResult struct {
 func Run(params SimulationParams) {
 	enemies := []Character{
 		// BoostGanger,
-		CyberPsychoTech,
+		CyberPsycho,
 	}
 	ammunitionTypes := []AmmunitionType{
 		Basic,
@@ -63,12 +63,12 @@ func Run(params SimulationParams) {
 				Weapon:          HeavyPistol, // this is filler, it gets overwritten in the scenario
 				ArmorValue:      11,
 				ArmorPenalty:    0,
-				HasSmartLink:    false,
+				HasSmartLink:    true,
 				AimedShotBonus:  0,
-				CombatAwareness: 0,
+				CombatAwareness: 1,
 				ExtendedClip:    false,
-				DrumClip:        false,
-				ExcellentWeapon: false,
+				DrumClip:        true,
+				ExcellentWeapon: true,
 			}
 
 			fmt.Printf("\nCharacter Name: %s / Ammunition Type: %s / Has Smartlink: %t / Combat Awareness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t / Enemy: %s / Enemy AP: %d\n",

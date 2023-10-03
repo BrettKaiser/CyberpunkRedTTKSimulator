@@ -1,11 +1,11 @@
 package main
 
-var PCSkillsAt = 6
+var PCSkillsAt = 10
 
 var CyberPsycho = Character{
 	CharacterStats: CyberPsychoStats,
 	Weapon:         HeavyPistol,
-	ArmorValue:     12,
+	ArmorValue:     11,
 	ArmorPenalty:   0,
 	ShouldDodge:    true,
 }
@@ -14,9 +14,10 @@ var CyberPsychoTech = Character{
 	CharacterStats: CyberPsychoTechStats,
 	Weapon:         HeavyPistol,
 	ArmorValue:     12,
-	ArmorPenalty:   0,
+	ArmorPenalty:   -0,
 	ShouldDodge:    true,
 	IsTech:         true,
+	HasPopupShield: true,
 }
 
 var BoostGanger = Character{

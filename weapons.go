@@ -59,8 +59,6 @@ const (
 	Incendiary    AmmunitionType = "incendiary"
 )
 
-type WeaponType string
-
 type Weapon struct {
 	Name                 string            `json:"name"`
 	DamageDice           int               `json:"damage_dice"`
@@ -73,7 +71,7 @@ type Weapon struct {
 	RateOfFire           int               `json:"rate_of_fire"`
 	Skill                Skill             `json:"skill"`
 	Ranged               bool              `json:"ranged"`
-	AutofireDice         int               `json:"autofire_dice"`
+	AutofireMax          int               `json:"autofire_max"`
 	CanAutofire          bool              `json:"can_autofire"`
 	CanAimedShot         bool              `json:"can_aimed_shot"`
 	HalvesArmor          bool
@@ -94,7 +92,7 @@ var HeavyMelee = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   true,
 	Cost:          100,
 }
@@ -109,7 +107,7 @@ var VeryHeavyMelee = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   true,
 	Cost:          500,
 }
@@ -124,7 +122,7 @@ var Body11MartialArt = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   true,
 	Unarmed:       true,
 	Cost:          2000,
@@ -140,7 +138,7 @@ var Body7MartialArt = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   true,
 	Unarmed:       true,
 	Cost:          0,
@@ -156,7 +154,7 @@ var BrawlingStrike7Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	Unarmed:       true,
 	Cost:          0,
@@ -172,7 +170,7 @@ var BrawlingStrike11Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  true,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	Unarmed:       true,
 	Cost:          2000,
@@ -188,7 +186,7 @@ var BrawlingChoke7Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  false,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   7,
@@ -206,7 +204,7 @@ var BrawlingChoke10Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  false,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   10,
@@ -224,7 +222,7 @@ var BrawlingChoke12Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  false,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   12,
@@ -242,7 +240,7 @@ var BrawlingChoke14Body = Weapon{
 	Ranged:        false,
 	CanAutofire:   false,
 	CanAimedShot:  false,
-	AutofireDice:  0,
+	AutofireMax:   0,
 	HalvesArmor:   false,
 	ShouldChoke:   true,
 	ChokeDamage:   14,
@@ -260,7 +258,7 @@ var MediumPistol = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     true,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         12,
 	ExtendedClipSize: 18,
@@ -278,7 +276,7 @@ var HeavyPistol = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     true,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         8,
 	ExtendedClipSize: 14,
@@ -296,7 +294,7 @@ var VeryHeavyPistol = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     true,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         8,
 	ExtendedClipSize: 14,
@@ -314,7 +312,7 @@ var ExoticHeavyPistol = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     true,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         8,
 	ExtendedClipSize: 8,
@@ -332,7 +330,7 @@ var GrenadeLauncher = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     false,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         2,
 	ExtendedClipSize: 4,
@@ -351,7 +349,7 @@ var RocketLauncher = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     false,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         1,
 	ExtendedClipSize: 2,
@@ -370,13 +368,33 @@ var AssaultRifle = Weapon{
 	Ranged:               true,
 	CanAutofire:          true,
 	CanAimedShot:         true,
-	AutofireDice:         3,
+	AutofireMax:          4,
 	AutofireRangeBandDVs: AssaultRifleAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             25,
 	ExtendedClipSize:     35,
 	DrumClipSize:         45,
 	Cost:                 500,
+}
+
+var Tsunami = Weapon{
+	Name:                 "Tsunami",
+	DamageDice:           5,
+	RangeBandDVs:         AssaultRifleRangeBands,
+	RequiredHands:        2,
+	RateOfFire:           1,
+	Skill:                HeavyWeapons,
+	Ranged:               true,
+	CanAutofire:          true,
+	CanAimedShot:         false,
+	AutofireMax:          5,
+	AutofireRangeBandDVs: AssaultRifleAutofireRangeBands,
+	HalvesArmor:          false,
+	AutofireSpent:        20,
+	ClipSize:             40,
+	ExtendedClipSize:     40,
+	DrumClipSize:         40,
+	Cost:                 5000,
 }
 
 var SniperRifle = Weapon{
@@ -389,7 +407,7 @@ var SniperRifle = Weapon{
 	Ranged:               true,
 	CanAutofire:          false,
 	CanAimedShot:         true,
-	AutofireDice:         0,
+	AutofireMax:          0,
 	AutofireRangeBandDVs: nil,
 	HalvesArmor:          false,
 	ClipSize:             4,
@@ -408,7 +426,7 @@ var SMG = Weapon{
 	Ranged:               true,
 	CanAutofire:          true,
 	CanAimedShot:         true,
-	AutofireDice:         2,
+	AutofireMax:          3,
 	AutofireRangeBandDVs: SMGAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             30,
@@ -427,7 +445,7 @@ var HeavySMG = Weapon{
 	Ranged:               true,
 	CanAutofire:          true,
 	CanAimedShot:         true,
-	AutofireDice:         2,
+	AutofireMax:          3,
 	AutofireRangeBandDVs: SMGAutofireRangeBands,
 	HalvesArmor:          false,
 	ClipSize:             40,
@@ -446,7 +464,7 @@ var Shotgun = Weapon{
 	Ranged:           true,
 	CanAutofire:      false,
 	CanAimedShot:     true,
-	AutofireDice:     0,
+	AutofireMax:      0,
 	HalvesArmor:      false,
 	ClipSize:         4,
 	ExtendedClipSize: 8,

@@ -38,12 +38,18 @@ type CombatScenario struct {
 	DistanceBetweenCharacters int
 	ScenarioCost              int
 	SetupCost                 int
-	JuryRigsRemaining         int
+	ArmorJuryRigsRemaining    int
+	ShieldJuryRigsRemaining   int
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
 	// Create a new random seed to make this scenario different
 	rand.Seed(time.Now().UnixNano())
+
+	popupShieldHP := 0
+	if params.Defender.HasPopupShield {
+		popupShieldHP = 10
+	}
 
 	return CombatScenario{
 		DebugLogs:      params.DebugLogs,
@@ -65,18 +71,20 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 				Weapon:          params.Defender.Weapon,
 				CurrentClipSize: getClipSize(params.Defender),
 			},
-			CurrentSP: params.Defender.ArmorValue,
+			CurrentSP:     params.Defender.ArmorValue,
+			PopupShieldHP: popupShieldHP,
 		},
 		InGrapple:                 false,
 		ConsecutiveChokeRounds:    0,
 		RangeBand:                 params.RangeBand,
 		DistanceBetweenCharacters: params.RangeBand.MaxDistance,
 
-		TotalAttacks:      0,
-		DamageDone:        0,
-		NumberOfRounds:    0,
-		NumberOfReloads:   0,
-		JuryRigsRemaining: 1,
+		TotalAttacks:            0,
+		DamageDone:              0,
+		NumberOfRounds:          0,
+		NumberOfReloads:         0,
+		ArmorJuryRigsRemaining:  1,
+		ShieldJuryRigsRemaining: 1,
 	}
 }
 
@@ -128,12 +136,21 @@ func (scenario *CombatScenario) Execute() CombatScenario {
 			}
 		}
 
-		if scenario.Defender.IsTech && scenario.JuryRigsRemaining > 0 {
-			halfArmor := int(math.Ceil(float64(scenario.Defender.ArmorValue) / 2))
-			if scenario.Defender.CurrentSP < halfArmor+2 {
-				// Jury Rig your armor
-				scenario.Defender.CurrentSP = scenario.Defender.ArmorValue
-				scenario.JuryRigsRemaining -= 1
+		if scenario.Defender.IsTech {
+			if scenario.Defender.HasPopupShield && scenario.ShieldJuryRigsRemaining > 0 {
+				if scenario.Defender.PopupShieldHP <= 0 {
+					scenario.Defender.PopupShieldHP = 10
+					scenario.ShieldJuryRigsRemaining -= 1
+				}
+			}
+
+			if scenario.ArmorJuryRigsRemaining > 0 {
+				halfArmor := int(math.Ceil(float64(scenario.Defender.ArmorValue) / 2))
+				if scenario.Defender.CurrentSP < halfArmor+2 {
+					// Jury Rig your armor
+					scenario.Defender.CurrentSP = scenario.Defender.ArmorValue
+					scenario.ArmorJuryRigsRemaining -= 1
+				}
 			}
 		}
 
@@ -388,6 +405,8 @@ func (scenario *CombatScenario) GetAttackSkill() int {
 }
 
 func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResult {
+	damageTotal := 0
+
 	damageResult := DamageResult{
 		TotalDamage:              0,
 		NumberOfCriticalInjuries: 0,
@@ -400,6 +419,20 @@ func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResul
 
 	numberOfDiceToRoll := GetDamageDice(scenario.Attacker.Weapon, params.AttackType)
 	diceResult := RollD6s(numberOfDiceToRoll)
+
+	damageTotal = diceResult.Total
+
+	// Get autofire damage here before armor
+	if scenario.AttackType == Autofire {
+		damageTotal = scenario.Attacker.CurrentWeapon.getAutofireDamage(damageTotal, params.ToHitResult.Difference)
+	}
+
+	if scenario.Defender.HasPopupShield && scenario.Defender.PopupShieldHP > 0 {
+		scenario.Defender.PopupShieldHP -= damageTotal
+		damageResult.ShieldDamage += damageTotal
+		return damageResult
+	}
+
 	if diceResult.NumberOf6s >= 2 {
 		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - 5
 		damageResult.NumberOfCriticalInjuries++
@@ -411,7 +444,7 @@ func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResul
 		armorValue = int(math.Ceil(float64(armorValue) / 2))
 	}
 
-	damageDifference := diceResult.Total - armorValue
+	damageDifference := damageTotal - armorValue
 
 	if damageDifference > 0 {
 		damageDone := GetDamageDone(params, damageDifference)
@@ -433,15 +466,21 @@ func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResul
 	return damageResult
 }
 
-func GetDamageDone(params DamageParams, damageDifference int) int {
-	damageDone := 0
+func (weapon *CurrentWeapon) getAutofireDamage(damageTotal, overage int) int {
+	autofireMultiplier := overage
+	if autofireMultiplier > weapon.AutofireMax {
+		autofireMultiplier = weapon.AutofireMax
+	}
+
+	damageTotal = damageTotal * autofireMultiplier
+	return damageTotal
+}
+
+func GetDamageDone(params DamageParams, armorAdjustedDamage int) int {
+	damageDone := armorAdjustedDamage
 	switch params.AttackType {
 	case Headshot:
-		damageDone = damageDifference * 2
-	case Autofire:
-		damageDone = damageDifference * params.ToHitResult.Difference
-	case SingleShot:
-		damageDone = damageDifference
+		damageDone = damageDone * 2
 	}
 
 	return damageDone
@@ -463,7 +502,7 @@ func GetDamageDice(weapon Weapon, attackType AttackType) int {
 			panic(fmt.Sprintf("trying to autofire a weapon that cant autofire: '%s'", weapon.Name))
 		}
 
-		return weapon.AutofireDice
+		return 2
 	}
 
 	return weapon.DamageDice
@@ -473,6 +512,7 @@ type DamageResult struct {
 	TotalDamage              int
 	NumberOfCriticalInjuries int
 	ArmorAblated             int
+	ShieldDamage             int
 }
 
 type ToHitResult struct {
@@ -559,7 +599,7 @@ func (scenario *CombatScenario) GetDV() int {
 			dv = weapon.AutofireRangeBandDVs[scenario.RangeBand]
 		}
 
-		if scenario.Defender.Reflexes >= 8 {
+		if !(scenario.Defender.HasPopupShield && scenario.Defender.PopupShieldHP > 0) && scenario.Defender.Reflexes >= 8 {
 			if scenario.ShouldDodge(dv, dvModifier) {
 				dv = GetD10CheckResult(scenario.Defender.Evasion, scenario.Defender.Dexterity, dvModifier)
 			}

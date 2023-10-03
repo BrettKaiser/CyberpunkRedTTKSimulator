@@ -145,7 +145,7 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 	}
 
 	for key, value := range eddiesPerScenarioSpentByAttackType {
-		eddiesPerScenarioSpentByAttackType[key] = value / 6
+		eddiesPerScenarioSpentByAttackType[key] = value / float64(len(RangeBands))
 	}
 
 	// Put the map into a slice of slices of strings
