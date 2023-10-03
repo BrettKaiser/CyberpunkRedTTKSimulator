@@ -40,6 +40,7 @@ type CombatScenario struct {
 	SetupCost                 int
 	ArmorJuryRigsRemaining    int
 	ShieldJuryRigsRemaining   int
+	TurnsSpentOnThisReload    int
 }
 
 func NewCombatScenario(params ScenarioParams) CombatScenario {
@@ -86,28 +87,6 @@ func NewCombatScenario(params ScenarioParams) CombatScenario {
 		ArmorJuryRigsRemaining:  1,
 		ShieldJuryRigsRemaining: 1,
 	}
-}
-
-func getClipSize(character Character) int {
-	clipSize := character.Weapon.ClipSize
-
-	if character.ExtendedClip {
-		clipSize = character.Weapon.ExtendedClipSize
-	}
-
-	if character.DrumClip {
-		clipSize = character.Weapon.DrumClipSize
-	}
-
-	return clipSize
-}
-
-func (scenario *CombatScenario) inMeleeRange() bool {
-	if scenario.DistanceBetweenCharacters > VeryClose.MaxDistance {
-		return false
-	}
-
-	return true
 }
 
 func (scenario *CombatScenario) Execute() CombatScenario {
@@ -189,12 +168,18 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 		numberOfAttacks = 1
 	}
 
+	if scenario.Attacker.CurrentWeapon.Weapon.Name == MilitechPerseus.Name {
+		if scenario.NumberOfRounds%2 == 0 {
+			numberOfAttacks = 2
+		}
+	}
+
 	for i := 0; i < numberOfAttacks; i++ {
 		if scenario.Defender.CurrentHP <= 0 {
 			break
 		}
 
-		if scenario.Attacker.mustReload(scenario.AttackType) {
+		if scenario.mustReload(scenario.AttackType) {
 			scenario.Reload()
 			break
 		}
@@ -231,6 +216,7 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 			AmmunitionType: scenario.AmmunitionType,
 			HalvesArmor:    scenario.Attacker.Weapon.HalvesArmor,
 			UsesAmmunition: scenario.Attacker.Weapon.Ranged,
+			AttackNumber:   i + 1,
 		})
 
 		damageDoneThisRound += damageResult.TotalDamage
@@ -254,6 +240,76 @@ func (scenario *CombatScenario) CalculateAttacks() AttacksResult {
 		CriticalInjuries: criticalInjuriesThisRound,
 		AttacksDone:      attacksDoneThisRound,
 	}
+}
+
+func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResult {
+	damageTotal := 0
+
+	damageResult := DamageResult{
+		TotalDamage:              0,
+		NumberOfCriticalInjuries: 0,
+		ArmorAblated:             0,
+	}
+
+	if !params.ToHitResult.Hit {
+		return damageResult
+	}
+
+	numberOfDiceToRoll := GetDamageDice(scenario.Attacker.Weapon, params.AttackType)
+	diceResult := RollD6s(numberOfDiceToRoll)
+
+	damageTotal = diceResult.Total
+
+	// Get autofire damage here before armor
+	if scenario.AttackType == Autofire {
+		damageTotal = scenario.Attacker.CurrentWeapon.getAutofireDamage(damageTotal, params.ToHitResult.Difference)
+	}
+
+	if params.AttackNumber == 1 {
+		damageTotal += scenario.Attacker.CombatAwarenessSpotWeakness
+	}
+
+	if scenario.Defender.HasPopupShield && scenario.Defender.PopupShieldHP > 0 {
+		scenario.Defender.PopupShieldHP -= damageTotal
+		damageResult.ShieldDamage += damageTotal
+		return damageResult
+	}
+
+	if diceResult.NumberOf6s >= 2 {
+		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - 5
+		damageResult.NumberOfCriticalInjuries++
+		damageResult.TotalDamage += 5
+	}
+
+	armorValue := scenario.Defender.CurrentSP
+	if scenario.Attacker.CurrentWeapon.IgnoresArmorUnder > 0 {
+		if armorValue < scenario.Attacker.CurrentWeapon.IgnoresArmorUnder {
+			armorValue = 0
+		}
+	} else if armorValue > 0 && params.HalvesArmor {
+		armorValue = int(math.Ceil(float64(armorValue) / 2))
+	}
+
+	damageDifference := damageTotal - armorValue
+
+	if damageDifference > 0 {
+		damageDone := GetDamageDone(params, damageDifference)
+		damageResult.TotalDamage += damageDone
+		scenario.DamageDone += damageDone
+
+		armorAblated := GetArmorAblated(params)
+		damageResult.ArmorAblated += armorAblated
+
+		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - damageDone
+
+		if scenario.Defender.CurrentSP >= armorAblated {
+			scenario.Defender.CurrentSP = scenario.Defender.CurrentSP - armorAblated
+		} else {
+			scenario.Defender.CurrentSP = 0
+		}
+	}
+
+	return damageResult
 }
 
 func (scenario *CombatScenario) setCost() {
@@ -299,171 +355,26 @@ func (scenario *CombatScenario) setCost() {
 	scenario.ScenarioCost = scenarioCost
 }
 
-func (scenario *CombatScenario) SubtractAmmo() {
-	scenario.Attacker.CurrentWeapon.subtractAmmo(scenario.AttackType)
-}
+func getClipSize(character Character) int {
+	clipSize := character.Weapon.ClipSize
 
-func (scenario *CombatScenario) Reload() {
-	scenario.NumberOfReloads++
-	scenario.Attacker.CurrentWeapon.reload(scenario.Attacker.Character)
-}
-
-func (weapon *CurrentWeapon) reload(character Character) {
-	weapon.CurrentClipSize = getClipSize(character)
-}
-
-func (scenario *CombatScenario) doesAttackerWinGrappleCheck() bool {
-	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, scenario.getGrappleModifiers(scenario.Attacker))
-	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, scenario.getGrappleModifiers(scenario.Defender))
-
-	if attackerRoll > defenderRoll {
-		return true
+	if character.ExtendedClip {
+		clipSize = character.Weapon.ExtendedClipSize
 	}
 
-	return false
-}
-
-func (scenario *CombatScenario) getGrappleModifiers(character CurrentCharacter) int {
-	modifiers := character.ArmorPenalty
-	modifiers += character.GetWoundPenalty()
-	return modifiers
-}
-
-func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
-	scenario.DistanceBetweenCharacters -= character.Movement
-
-	if scenario.DistanceBetweenCharacters < 0 {
-		scenario.DistanceBetweenCharacters = 0
-	}
-}
-
-func (weapon *CurrentWeapon) subtractAmmo(attackType AttackType) int {
-	if !weapon.Ranged {
-		return 0
+	if character.DrumClip {
+		clipSize = character.Weapon.DrumClipSize
 	}
 
-	amountToSubtract := 0
-
-	switch attackType {
-	case Autofire:
-		amountToSubtract -= 10
-	case SingleShot:
-		amountToSubtract -= 1
-	case Headshot:
-		amountToSubtract -= 1
-	}
-
-	weapon.CurrentClipSize += amountToSubtract
-	return amountToSubtract * -1
+	return clipSize
 }
 
-func (character *CurrentCharacter) mustReload(attackType AttackType) bool {
-	if !character.CurrentWeapon.Ranged {
+func (scenario *CombatScenario) inMeleeRange() bool {
+	if scenario.DistanceBetweenCharacters > VeryClose.MaxDistance {
 		return false
 	}
 
-	switch attackType {
-	case Autofire:
-		if character.CurrentWeapon.CurrentClipSize < 10 {
-			return true
-		}
-	case SingleShot:
-		if character.CurrentWeapon.CurrentClipSize < 1 {
-			return true
-		}
-	case Headshot:
-		if character.CurrentWeapon.CurrentClipSize < 1 {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (scenario *CombatScenario) GetAttackSkill() int {
-	skill := 0
-	switch scenario.Attacker.Weapon.Skill {
-	case Handguns:
-		skill = scenario.Attacker.Handguns
-	case ShoulderArms:
-		skill = scenario.Attacker.ShoulderArms
-	case HeavyWeapons:
-		skill = scenario.Attacker.HeavyWeapons
-	case AutoFire:
-		skill = scenario.Attacker.AutoFire
-	case Brawling:
-		skill = scenario.Attacker.Brawling
-	case Melee:
-		skill = scenario.Attacker.Melee
-	case MartialArts:
-		skill = scenario.Attacker.MartialArts
-	default:
-		panic(fmt.Sprintf("missing weapon skill %s", scenario.Attacker.Weapon.Skill))
-	}
-
-	return skill
-}
-
-func (scenario *CombatScenario) CalculateDamage(params DamageParams) DamageResult {
-	damageTotal := 0
-
-	damageResult := DamageResult{
-		TotalDamage:              0,
-		NumberOfCriticalInjuries: 0,
-		ArmorAblated:             0,
-	}
-
-	if !params.ToHitResult.Hit {
-		return damageResult
-	}
-
-	numberOfDiceToRoll := GetDamageDice(scenario.Attacker.Weapon, params.AttackType)
-	diceResult := RollD6s(numberOfDiceToRoll)
-
-	damageTotal = diceResult.Total
-
-	// Get autofire damage here before armor
-	if scenario.AttackType == Autofire {
-		damageTotal = scenario.Attacker.CurrentWeapon.getAutofireDamage(damageTotal, params.ToHitResult.Difference)
-	}
-
-	if scenario.Defender.HasPopupShield && scenario.Defender.PopupShieldHP > 0 {
-		scenario.Defender.PopupShieldHP -= damageTotal
-		damageResult.ShieldDamage += damageTotal
-		return damageResult
-	}
-
-	if diceResult.NumberOf6s >= 2 {
-		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - 5
-		damageResult.NumberOfCriticalInjuries++
-		damageResult.TotalDamage += 5
-	}
-
-	armorValue := scenario.Defender.CurrentSP
-	if armorValue > 0 && params.HalvesArmor {
-		armorValue = int(math.Ceil(float64(armorValue) / 2))
-	}
-
-	damageDifference := damageTotal - armorValue
-
-	if damageDifference > 0 {
-		damageDone := GetDamageDone(params, damageDifference)
-		damageResult.TotalDamage += damageDone
-		scenario.DamageDone += damageDone
-
-		armorAblated := GetArmorAblated(params)
-		damageResult.ArmorAblated += armorAblated
-
-		scenario.Defender.CurrentHP = scenario.Defender.CurrentHP - damageDone
-
-		if scenario.Defender.CurrentSP >= armorAblated {
-			scenario.Defender.CurrentSP = scenario.Defender.CurrentSP - armorAblated
-		} else {
-			scenario.Defender.CurrentSP = 0
-		}
-	}
-
-	return damageResult
+	return true
 }
 
 func (weapon *CurrentWeapon) getAutofireDamage(damageTotal, overage int) int {
@@ -568,7 +479,7 @@ func (scenario *CombatScenario) GetAttackModifiers() int {
 		totalModifier += 1
 	}
 
-	totalModifier += scenario.Attacker.CombatAwareness
+	totalModifier += scenario.Attacker.CombatAwarenessPrecisionAttack
 	totalModifier += scenario.Attacker.GetWoundPenalty()
 	totalModifier += scenario.Attacker.ArmorPenalty
 
@@ -693,4 +604,127 @@ type DamageParams struct {
 	AmmunitionType AmmunitionType
 	HalvesArmor    bool
 	UsesAmmunition bool
+	AttackNumber   int
+}
+
+func (scenario *CombatScenario) SubtractAmmo() {
+	scenario.Attacker.CurrentWeapon.subtractAmmo(scenario.AttackType)
+}
+
+func (scenario *CombatScenario) Reload() {
+	scenario.NumberOfReloads++
+	scenario.TurnsSpentOnThisReload++
+
+	if scenario.TurnsSpentOnThisReload >= scenario.Attacker.CurrentWeapon.Weapon.TurnsToReload {
+		scenario.Attacker.CurrentWeapon.reload(scenario.Attacker.Character)
+	}
+}
+
+func (weapon *CurrentWeapon) reload(character Character) {
+	weapon.CurrentClipSize = getClipSize(character)
+}
+
+func (scenario *CombatScenario) doesAttackerWinGrappleCheck() bool {
+	attackerRoll := GetD10CheckResult(scenario.Attacker.Dexterity, scenario.Attacker.Brawling, scenario.getGrappleModifiers(scenario.Attacker))
+	defenderRoll := GetD10CheckResult(scenario.Defender.Dexterity, scenario.Defender.Brawling, scenario.getGrappleModifiers(scenario.Defender))
+
+	if attackerRoll > defenderRoll {
+		return true
+	}
+
+	return false
+}
+
+func (scenario *CombatScenario) getGrappleModifiers(character CurrentCharacter) int {
+	modifiers := character.ArmorPenalty
+	modifiers += character.GetWoundPenalty()
+	return modifiers
+}
+
+func (scenario *CombatScenario) moveCharacterCloser(character CurrentCharacter) {
+	scenario.DistanceBetweenCharacters -= character.Movement
+
+	if scenario.DistanceBetweenCharacters < 0 {
+		scenario.DistanceBetweenCharacters = 0
+	}
+}
+
+func (weapon *CurrentWeapon) subtractAmmo(attackType AttackType) int {
+	if !weapon.Ranged {
+		return 0
+	}
+
+	amountToSubtract := 0
+
+	switch attackType {
+	case Autofire:
+		autofireCost := 10
+		if weapon.AutofireSpent > 0 {
+			autofireCost = weapon.AutofireSpent
+		}
+		amountToSubtract -= autofireCost
+	case SingleShot:
+		amountToSubtract -= 1
+	case Headshot:
+		amountToSubtract -= 1
+	}
+
+	weapon.CurrentClipSize += amountToSubtract
+	return amountToSubtract * -1
+}
+
+func (scenario *CombatScenario) mustReload(attackType AttackType) bool {
+	character := scenario.Attacker
+	if !character.CurrentWeapon.Ranged {
+		return false
+	}
+
+	if scenario.TurnsSpentOnThisReload > 1 && character.CurrentWeapon.Weapon.TurnsToReload > 1 && scenario.TurnsSpentOnThisReload < character.CurrentWeapon.Weapon.TurnsToReload {
+		return true
+	}
+
+	switch attackType {
+	case Autofire:
+		autofireCost := 10
+		if character.CurrentWeapon.AutofireSpent > 0 {
+			autofireCost = character.CurrentWeapon.AutofireSpent
+		}
+		if character.CurrentWeapon.CurrentClipSize < autofireCost {
+			return true
+		}
+	case SingleShot:
+		if character.CurrentWeapon.CurrentClipSize < 1 {
+			return true
+		}
+	case Headshot:
+		if character.CurrentWeapon.CurrentClipSize < 1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (scenario *CombatScenario) GetAttackSkill() int {
+	skill := 0
+	switch scenario.Attacker.Weapon.Skill {
+	case Handguns:
+		skill = scenario.Attacker.Handguns
+	case ShoulderArms:
+		skill = scenario.Attacker.ShoulderArms
+	case HeavyWeapons:
+		skill = scenario.Attacker.HeavyWeapons
+	case AutoFire:
+		skill = scenario.Attacker.AutoFire
+	case Brawling:
+		skill = scenario.Attacker.Brawling
+	case Melee:
+		skill = scenario.Attacker.Melee
+	case MartialArts:
+		skill = scenario.Attacker.MartialArts
+	default:
+		panic(fmt.Sprintf("missing weapon skill %s", scenario.Attacker.Weapon.Skill))
+	}
+
+	return skill
 }

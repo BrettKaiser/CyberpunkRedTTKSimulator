@@ -10,6 +10,9 @@ var WeaponsList = []Weapon{
 
 	HeavyMelee,
 	VeryHeavyMelee,
+	KendachiMonoThree,
+	KendachiMonoWakizashi,
+	RostovicKleaver,
 
 	Body7MartialArt,
 	Body11MartialArt,
@@ -18,12 +21,17 @@ var WeaponsList = []Weapon{
 	HeavyPistol,
 	VeryHeavyPistol,
 	ExoticHeavyPistol,
+	MilitechPerseus,
 
 	GrenadeLauncher,
 	RocketLauncher,
 
 	AssaultRifle,
+	RhinemetallRailgun,
+
 	SniperRifle,
+
+	TsunamiArmsHelix,
 
 	SMG,
 	HeavySMG,
@@ -80,6 +88,9 @@ type Weapon struct {
 	Unarmed              bool
 	Cost                 int
 	Explosive            bool
+	AutofireSpent        int
+	IgnoresArmorUnder    int
+	TurnsToReload        int
 }
 
 var HeavyMelee = Weapon{
@@ -110,6 +121,54 @@ var VeryHeavyMelee = Weapon{
 	AutofireMax:   0,
 	HalvesArmor:   true,
 	Cost:          500,
+}
+
+var RostovicKleaver = Weapon{
+	Name:              "Rostovic Kleaver",
+	DamageDice:        5,
+	RangeBandDVs:      nil,
+	RequiredHands:     2,
+	RateOfFire:        1,
+	Skill:             Melee,
+	Ranged:            false,
+	CanAutofire:       false,
+	CanAimedShot:      true,
+	AutofireMax:       0,
+	HalvesArmor:       true,
+	Cost:              500,
+	IgnoresArmorUnder: 11,
+}
+
+var KendachiMonoWakizashi = Weapon{
+	Name:              "Kendachi Mono-Wakizashi",
+	DamageDice:        3,
+	RangeBandDVs:      nil,
+	RequiredHands:     2,
+	RateOfFire:        2,
+	Skill:             Melee,
+	Ranged:            false,
+	CanAutofire:       false,
+	CanAimedShot:      true,
+	AutofireMax:       0,
+	HalvesArmor:       true,
+	Cost:              100,
+	IgnoresArmorUnder: 7,
+}
+
+var KendachiMonoThree = Weapon{
+	Name:              "Kendachi Mono Three",
+	DamageDice:        4,
+	RangeBandDVs:      nil,
+	RequiredHands:     2,
+	RateOfFire:        1,
+	Skill:             Melee,
+	Ranged:            false,
+	CanAutofire:       false,
+	CanAimedShot:      true,
+	AutofireMax:       0,
+	HalvesArmor:       true,
+	Cost:              5000,
+	IgnoresArmorUnder: 11,
 }
 
 var Body11MartialArt = Weapon{
@@ -302,6 +361,24 @@ var VeryHeavyPistol = Weapon{
 	Cost:             100,
 }
 
+var MilitechPerseus = Weapon{
+	Name:             "Militech Perseus",
+	DamageDice:       4,
+	RangeBandDVs:     PistolRangeBands,
+	RequiredHands:    1,
+	RateOfFire:       1,
+	Skill:            Handguns,
+	Ranged:           true,
+	CanAutofire:      false,
+	CanAimedShot:     true,
+	AutofireMax:      0,
+	HalvesArmor:      false,
+	ClipSize:         11,
+	ExtendedClipSize: 11,
+	DrumClipSize:     11,
+	Cost:             5000,
+}
+
 var ExoticHeavyPistol = Weapon{
 	Name:             "Exotic Pistol",
 	DamageDice:       5,
@@ -377,8 +454,28 @@ var AssaultRifle = Weapon{
 	Cost:                 500,
 }
 
-var Tsunami = Weapon{
-	Name:                 "Tsunami",
+var RhinemetallRailgun = Weapon{
+	Name:              "Rhinemetall Railgun",
+	DamageDice:        5,
+	RangeBandDVs:      AssaultRifleRangeBands,
+	RequiredHands:     2,
+	RateOfFire:        1,
+	Skill:             HeavyWeapons,
+	Ranged:            true,
+	CanAutofire:       false,
+	CanAimedShot:      false,
+	AutofireMax:       0,
+	HalvesArmor:       false,
+	ClipSize:          4,
+	ExtendedClipSize:  4,
+	DrumClipSize:      4,
+	Cost:              5000,
+	TurnsToReload:     2,
+	IgnoresArmorUnder: 11,
+}
+
+var TsunamiArmsHelix = Weapon{
+	Name:                 "Tsunami Arms Helix",
 	DamageDice:           5,
 	RangeBandDVs:         AssaultRifleRangeBands,
 	RequiredHands:        2,
@@ -395,6 +492,7 @@ var Tsunami = Weapon{
 	ExtendedClipSize:     40,
 	DrumClipSize:         40,
 	Cost:                 5000,
+	TurnsToReload:        2,
 }
 
 var SniperRifle = Weapon{

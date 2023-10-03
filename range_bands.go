@@ -53,7 +53,7 @@ var RangeBands = []RangeBand{
 	Close,
 	Medium,
 	MediumFar,
-	// Far,
+	Far,
 	// VeryFar,
 	// VeryVeryFar,
 	// InsanelyFar,

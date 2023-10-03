@@ -48,31 +48,32 @@ type PerBandResult struct {
 
 func Run(params SimulationParams) {
 	enemies := []Character{
-		// BoostGanger,
+		BoostGanger,
 		CyberPsycho,
 	}
 	ammunitionTypes := []AmmunitionType{
-		Basic,
-		// ArmorPiercing,
+		// Basic,
+		ArmorPiercing,
 	}
 	for _, ammunitionType := range ammunitionTypes {
 		for _, enemy := range enemies {
 			perBandResults := make([]PerBandResult, 0)
 			attacker := Character{
-				CharacterStats:  PlayerCharacter,
-				Weapon:          HeavyPistol, // this is filler, it gets overwritten in the scenario
-				ArmorValue:      11,
-				ArmorPenalty:    0,
-				HasSmartLink:    true,
-				AimedShotBonus:  0,
-				CombatAwareness: 1,
-				ExtendedClip:    false,
-				DrumClip:        true,
-				ExcellentWeapon: true,
+				CharacterStats:                 PlayerCharacter,
+				Weapon:                         HeavyPistol, // this is filler, it gets overwritten in the scenario
+				ArmorValue:                     11,
+				ArmorPenalty:                   0,
+				HasSmartLink:                   true,
+				AimedShotBonus:                 1,
+				CombatAwarenessPrecisionAttack: 0,
+				CombatAwarenessSpotWeakness:    10,
+				ExtendedClip:                   false,
+				DrumClip:                       true,
+				ExcellentWeapon:                true,
 			}
 
 			fmt.Printf("\nCharacter Name: %s / Ammunition Type: %s / Has Smartlink: %t / Combat Awareness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t / Enemy: %s / Enemy AP: %d\n",
-				attacker.Name, ammunitionType, attacker.HasSmartLink, attacker.CombatAwareness, attacker.AimedShotBonus, attacker.ExtendedClip, attacker.DrumClip, enemy.Name, enemy.ArmorValue,
+				attacker.Name, ammunitionType, attacker.HasSmartLink, attacker.CombatAwarenessPrecisionAttack, attacker.AimedShotBonus, attacker.ExtendedClip, attacker.DrumClip, enemy.Name, enemy.ArmorValue,
 			)
 
 			for _, rangeBand := range RangeBands {
@@ -208,11 +209,11 @@ func runScenario(scenarioParams ScenarioParams) RunResult {
 		}
 	}
 
-	runResult.AverageRoundsToKill = fmt.Sprintf("%.3f", getAverageRoundsToKill(scenariosRun))
-	runResult.AverageAttacksToKill = fmt.Sprintf("%.3f", getAverageAttacksToKill(scenariosRun))
-	runResult.AverageNumberOfReloads = fmt.Sprintf("%.2f", getAverageReloads(scenariosRun))
-	runResult.AverageRoundsSpentRunning = fmt.Sprintf("%.2f", getAverageRunningInstances(scenariosRun))
-	runResult.AverageEddiesSpentPerScenario = fmt.Sprintf("%.2f", getAverageEddiesSpent(scenariosRun))
+	runResult.AverageRoundsToKill = fmt.Sprintf("%.1f", getAverageRoundsToKill(scenariosRun))
+	runResult.AverageAttacksToKill = fmt.Sprintf("%.1f", getAverageAttacksToKill(scenariosRun))
+	runResult.AverageNumberOfReloads = fmt.Sprintf("%.1f", getAverageReloads(scenariosRun))
+	runResult.AverageRoundsSpentRunning = fmt.Sprintf("%.1f", getAverageRunningInstances(scenariosRun))
+	runResult.AverageEddiesSpentPerScenario = fmt.Sprintf("%.1f", getAverageEddiesSpent(scenariosRun))
 	runResult.SetupCost = fmt.Sprintf("%d", scenariosRun[0].SetupCost)
 
 	return runResult
