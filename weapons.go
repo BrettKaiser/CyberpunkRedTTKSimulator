@@ -3,40 +3,41 @@ package main
 var WeaponsList = []Weapon{
 	BrawlingChoke7Body,
 	BrawlingChoke10Body,
-	BrawlingChoke12Body,
-	BrawlingChoke14Body,
-	BrawlingStrike7Body,
-	BrawlingStrike11Body,
 
 	HeavyMelee,
 	VeryHeavyMelee,
-	KendachiMonoThree,
-	KendachiMonoWakizashi,
-	RostovicKleaver,
 
 	Body7MartialArt,
-	Body11MartialArt,
 
 	MediumPistol,
 	HeavyPistol,
 	VeryHeavyPistol,
-	ExoticHeavyPistol,
-	MilitechPerseus,
 
 	GrenadeLauncher,
 	RocketLauncher,
 
 	AssaultRifle,
-	RhinemetallRailgun,
 
 	SniperRifle,
-
-	TsunamiArmsHelix,
 
 	SMG,
 	HeavySMG,
 
 	Shotgun,
+
+	// TsunamiArmsHelix,
+	// RhinemetallRailgun,
+	// ExoticHeavyPistol,
+	// MilitechPerseus,
+	// Body11MartialArt,
+	// KendachiMonoThree,
+	// KendachiMonoWakizashi,
+	// RostovicKleaver,
+	// BrawlingChoke12Body,
+	// BrawlingChoke14Body,
+	// BrawlingStrike7Body,
+	// BrawlingStrike11Body,
+
 }
 
 var AmmunitionTypes = map[string]Ammunition{

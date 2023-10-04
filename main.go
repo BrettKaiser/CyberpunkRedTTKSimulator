@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-const ITERATIONS = 1000
+const ITERATIONS = 10000
 
-const MAXIMUMROUNDS = 100
+const MAXIMUMROUNDS = 50
 
 type SimulationParams struct {
 	Iterations int
@@ -21,6 +21,7 @@ type ScenarioParams struct {
 	AttackType AttackType
 	Attacker   Character
 	Defender   Character
+	Bodyguard  Character
 	RangeBand  RangeBand
 	DebugLogs  bool
 	Iterations int
@@ -48,7 +49,7 @@ type PerBandResult struct {
 
 func Run(params SimulationParams) {
 	enemies := []Character{
-		BoostGanger,
+		// BoostGanger,
 		CyberPsycho,
 	}
 	ammunitionTypes := []AmmunitionType{
@@ -63,17 +64,29 @@ func Run(params SimulationParams) {
 				Weapon:                         HeavyPistol, // this is filler, it gets overwritten in the scenario
 				ArmorValue:                     11,
 				ArmorPenalty:                   0,
-				HasSmartLink:                   true,
-				AimedShotBonus:                 1,
+				HasSmartLink:                   false,
+				AimedShotBonus:                 0,
 				CombatAwarenessPrecisionAttack: 0,
-				CombatAwarenessSpotWeakness:    10,
+				CombatAwarenessSpotWeakness:    4,
 				ExtendedClip:                   false,
-				DrumClip:                       true,
-				ExcellentWeapon:                true,
+				DrumClip:                       false,
+				ExcellentWeapon:                false,
+				HasBodyguardTeammate:           false,
 			}
 
-			fmt.Printf("\nCharacter Name: %s / Ammunition Type: %s / Has Smartlink: %t / Combat Awareness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t / Enemy: %s / Enemy AP: %d\n",
-				attacker.Name, ammunitionType, attacker.HasSmartLink, attacker.CombatAwarenessPrecisionAttack, attacker.AimedShotBonus, attacker.ExtendedClip, attacker.DrumClip, enemy.Name, enemy.ArmorValue,
+			fmt.Printf("\nCharacter Name: %s / PC Skills At: %d / Ammunition Type: %s / Has Smartlink: %t / Precision Attack: %d / Spot Weakness: %d / Aimed Shot: %d / Extended Clip: %t / Drum Clip: %t / Has Bodyguard: %t / Enemy: %s / Enemy AP: %d\n",
+				attacker.Name,
+				PCSkillsAt,
+				ammunitionType,
+				attacker.HasSmartLink,
+				attacker.CombatAwarenessPrecisionAttack,
+				attacker.CombatAwarenessSpotWeakness,
+				attacker.AimedShotBonus,
+				attacker.ExtendedClip,
+				attacker.DrumClip,
+				attacker.HasBodyguardTeammate,
+				enemy.Name,
+				enemy.ArmorValue,
 			)
 
 			for _, rangeBand := range RangeBands {
@@ -104,6 +117,7 @@ func Run(params SimulationParams) {
 									AttackType: attackType,
 									Attacker:   attacker,
 									Defender:   enemy,
+									Bodyguard:  PlayerBodyguard,
 									RangeBand:  rangeBand,
 									DebugLogs:  params.DebugLogs,
 									Iterations: params.Iterations,

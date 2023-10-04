@@ -1,6 +1,6 @@
 package main
 
-var PCSkillsAt = 10
+var PCSkillsAt = 6
 
 var CyberPsycho = Character{
 	CharacterStats: CyberPsychoStats,
@@ -42,6 +42,32 @@ var PlayerCharacter = CharacterStats{
 	AutoFire:        PCSkillsAt,
 	Melee:           PCSkillsAt,
 	MartialArts:     PCSkillsAt,
+	AttackModifiers: []Modifier{},
+}
+
+var PlayerBodyguard = Character{
+	CharacterStats: PlayerBodyguardStats,
+	Weapon:         HeavyPistol,
+	ArmorValue:     11,
+	ArmorPenalty:   0,
+	ShouldDodge:    true,
+}
+
+var BodyGuardSkillsAt = 6
+var PlayerBodyguardStats = CharacterStats{
+	Name:            "Bodyguard",
+	MaxHP:           40,
+	Reflexes:        8,
+	Dexterity:       6,
+	Movement:        6,
+	Evasion:         BodyGuardSkillsAt,
+	Brawling:        BodyGuardSkillsAt,
+	Handguns:        BodyGuardSkillsAt,
+	ShoulderArms:    BodyGuardSkillsAt,
+	HeavyWeapons:    BodyGuardSkillsAt,
+	AutoFire:        BodyGuardSkillsAt,
+	Melee:           BodyGuardSkillsAt,
+	MartialArts:     BodyGuardSkillsAt,
 	AttackModifiers: []Modifier{},
 }
 

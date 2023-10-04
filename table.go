@@ -137,7 +137,7 @@ func getRowsTableByAverageRTKACrossRangeBands(perBandResults []PerBandResult) []
 					if err != nil {
 						panic("tried to parse a non-float value")
 					}
-					totalTimeToKillPerWeaponAndAttackType[rowName] += roundsToKillFloat
+					totalTimeToKillPerWeaponAndAttackType[rowName] += roundsToKillFloat / float64(len(RangeBands))
 
 					eddiesPerScenarioFloat, err := strconv.ParseFloat(attackTypeResults.AverageEddiesSpentPerScenario, 64)
 					if err != nil {

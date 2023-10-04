@@ -25,6 +25,7 @@ type Character struct {
 	ExcellentWeapon                bool `json:"excellent_weapon"`
 	IsTech                         bool
 	HasPopupShield                 bool
+	HasBodyguardTeammate           bool
 }
 
 type CharacterStats struct {
@@ -46,11 +47,15 @@ type CharacterStats struct {
 
 type CurrentCharacter struct {
 	Character
-	CurrentHP     int           `json:"current_hp"`
-	CurrentSP     int           `json:"current_sp"`
-	Modifiers     []Modifier    `json:"modifiers"`
-	CurrentWeapon CurrentWeapon `json:"current_weapon"`
-	PopupShieldHP int           `json:"popup_shield_hp"`
+	CurrentHP              int           `json:"current_hp"`
+	CurrentSP              int           `json:"current_sp"`
+	Modifiers              []Modifier    `json:"modifiers"`
+	CurrentWeapon          CurrentWeapon `json:"current_weapon"`
+	PopupShieldHP          int           `json:"popup_shield_hp"`
+	TurnsSpentOnThisReload int           `json:"turns_spent_on_this_reload"`
+	CurrentClipSize        int
+	ConsecutiveChokeRounds int
+	AttackType             AttackType
 }
 
 type Modifier struct {
